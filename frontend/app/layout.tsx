@@ -1,34 +1,29 @@
 import './globals.css'
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Merriweather } from 'next/font/google'
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' })
+const merri = Merriweather({ subsets: ['latin'], weight: ['300','400','700'], display: 'swap' })
 
 export const metadata: Metadata = {
-	title: 'Nomad AI — Travel Companion',
-	description: 'Build smarter itineraries, discover hidden gems, and catch real-time travel signals with GPT-OSS.',
+	title: 'NomadAI — Your Frontier Travel Companion',
+	description: 'NomadAI helps you plan smarter trips with elegant itineraries, signals, and tools.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en" className={inter.className}>
-			<body className="min-h-screen bg-gradient-to-br from-sky-400/20 via-sky-500/10 to-orange-300/20 text-slate-100">
-				<header className="border-b border-white/10 backdrop-blur">
-					<div className="container-max py-4 flex items-center justify-between">
-						<div className="text-xl font-semibold">Nomad AI</div>
-						<nav className="space-x-4 text-sm">
-							<a href="/" className="hover:underline">Home</a>
-							<a href="/memories" className="hover:underline">Memory Journal</a>
-							<a href="/digest" className="hover:underline">Email Digest</a>
-							<a href="/chat" className="hover:underline">Chat</a>
-							<a href="/settings" className="hover:underline">Settings</a>
-						</nav>
+			<body className="min-h-screen text-[var(--text-primary)]">
+				<header className="border-b border-white/10">
+					<div className="container-max py-10 text-center">
+						<h1 className={`${merri.className} text-3xl md:text-4xl font-semibold`}>NomadAI — Your Frontier Travel Companion</h1>
+						<p className="mt-2 text-white/80">Plan journeys, uncover hidden gems, and travel confidently with AI.</p>
 					</div>
-					<div className="container-max pb-3">
-						<ul className="flex gap-2 text-xs">
-							<li><a href="/chat" className="inline-block rounded-full border border-white/15 bg-white/10 px-3 py-1 hover:bg-white/15">Chat</a></li>
-							<li><a href="/" className="inline-block rounded-full border border-white/15 bg-white/10 px-3 py-1 hover:bg-white/15">Itinerary</a></li>
-							<li><a href="/tools" className="inline-block rounded-full border border-white/15 bg-white/10 px-3 py-1 hover:bg-white/15">Nomad Tools</a></li>
+					<div className="container-max pb-4">
+						<ul className="flex items-center justify-center gap-3 text-sm">
+							<li><a href="/chat" className="inline-block rounded-full border border-white/15 bg-white/5 px-4 py-1 hover:bg-white/10 hover:text-[var(--accent)]">Chat</a></li>
+							<li><a href="/" className="inline-block rounded-full border border-white/15 bg-white/5 px-4 py-1 hover:bg-white/10 hover:text-[var(--accent)]">Itinerary</a></li>
+							<li><a href="/tools" className="inline-block rounded-full border border-white/15 bg-white/5 px-4 py-1 hover:bg-white/10 hover:text-[var(--accent)]">Nomad Tools</a></li>
 						</ul>
 					</div>
 				</header>

@@ -3,8 +3,10 @@
 @tailwind utilities;
 
 :root {
-	--bg: #0b1220;
-	--fg: #e2e8f0;
+	--bg-primary: #0F1E2E;
+	--bg-secondary: #1D3A4F;
+	--text-primary: #F8F9FA;
+	--accent: #E3B23C;
 }
 
 html, body {
@@ -12,8 +14,9 @@ html, body {
 }
 
 body {
-	background: var(--bg);
-	color: var(--fg);
+	background: radial-gradient(1200px 600px at top left, var(--bg-secondary) 0%, transparent 50%),
+		linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+	color: var(--text-primary);
 }
 
 .container-max {
@@ -21,5 +24,13 @@ body {
 }
 
 .card {
-	@apply rounded-xl border border-white/10 bg-white/5 backdrop-blur p-4 shadow;
+	@apply rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-4 shadow-lg;
+}
+
+.accent {
+	color: var(--accent);
+}
+
+.accent-bg {
+	background-color: var(--accent);
 }
