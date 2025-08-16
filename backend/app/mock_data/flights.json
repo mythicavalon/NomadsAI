@@ -1,23 +1,7 @@
 [
-	{
-		"from": "NYC",
-		"to": "Barcelona, Spain",
-		"price": 380,
-		"found_at": "2025-03-01T10:00:00",
-		"region": "Europe"
-	},
-	{
-		"from": "LAX",
-		"to": "Tokyo, Japan",
-		"price": 520,
-		"found_at": "2025-03-03T09:30:00",
-		"region": "Asia"
-	},
-	{
-		"from": "ORD",
-		"to": "New Orleans, USA",
-		"price": 99,
-		"found_at": "2025-03-02T14:15:00",
-		"region": "North America"
-	}
+	{"from": "NYC", "to": "Barcelona, Spain", "price": 380, "found_at": "2025-03-01T10:00:00", "region": "Europe"},
+	{"from": "LAX", "to": "Tokyo, Japan", "price": 520, "found_at": "2025-03-03T09:30:00", "region": "Asia"},
+	{"from": "ORD", "to": "New Orleans, USA", "price": 99, "found_at": "2025-03-02T14:15:00", "region": "North America"},
+	{"from": "SFO", "to": "Barcelona, Spain", "price": 410, "found_at": "2025-03-05T12:00:00", "region": "Europe"},
+	{"from": "SEA", "to": "Tokyo, Japan", "price": 560, "found_at": "2025-03-06T16:45:00", "region": "Asia"}
 ]

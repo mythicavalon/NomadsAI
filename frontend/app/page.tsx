@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { clsx } from "clsx";
+import CityCard from "../components/CityCard";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
@@ -19,6 +20,11 @@ export default function HomePage() {
 	const [loading, setLoading] = useState(false);
 
 	const interestOptions = ["culture", "food", "adventure", "relax"];
+	const sampleCities = [
+		{ name: "Barcelona, Spain", blurb: "Gaudí, beaches, tapas" },
+		{ name: "Tokyo, Japan", blurb: "Shrines, neon, ramen" },
+		{ name: "New Orleans, USA", blurb: "Jazz, Creole, river" },
+	];
 
 	useEffect(() => {
 		const params = new URLSearchParams();
@@ -63,9 +69,14 @@ export default function HomePage() {
 
 	return (
 		<div className="space-y-8">
-			<section className="card">
-				<h1 className="text-2xl font-semibold mb-2">Nomad AI — Your AI travel companion</h1>
-				<p className="text-white/70">Build smarter itineraries, discover hidden gems, and catch real-time travel signals with GPT-OSS.</p>
+			<section className="rounded-xl p-8 bg-gradient-to-br from-brand/20 to-white/5 border border-white/10">
+				<h1 className="text-3xl font-semibold mb-2">Nomad AI — Smarter trips with AI</h1>
+				<p className="text-white/70">Itineraries that highlight landmarks, food, and events — plus live travel signals and surprise picks.</p>
+				<div className="mt-4 grid sm:grid-cols-3 gap-3">
+					{sampleCities.map(c => (
+						<CityCard key={c.name} name={c.name} blurb={c.blurb} onSelect={setDestination} />
+					))}
+				</div>
 			</section>
 
 			<section className="card grid md:grid-cols-3 gap-4">
@@ -138,6 +149,7 @@ export default function HomePage() {
 
 			<section className="card">
 				<h2 className="text-xl font-semibold mb-3">Travel Signals</h2>
+				{signals.length === 0 && <div className="text-white/60 text-sm">No signals for this filter yet.</div>}
 				<div className="grid md:grid-cols-3 gap-4">
 					{signals.map((s: any, idx: number) => (
 						<div key={idx} className="p-3 rounded bg-white/5 border border-white/10">

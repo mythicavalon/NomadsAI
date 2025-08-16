@@ -3,14 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
 
-from .routers import itineraries, signals, memory, digest
+from .routers import itineraries, signals, memory, digest, chat
 
 
 def create_app() -> FastAPI:
 	# Load .env if present for local dev
 	load_dotenv()
 
-	app = FastAPI(title="Nomad AI Backend", version="0.1.0")
+	app = FastAPI(title="Nomad AI Backend", version="0.2.0")
 
 	# CORS configuration - configurable via env
 	origins_raw = os.getenv("CORS_ORIGINS", "").strip()
@@ -31,6 +31,7 @@ def create_app() -> FastAPI:
 	app.include_router(signals.router, prefix="/api/signals", tags=["signals"])
 	app.include_router(memory.router, prefix="/api/memory", tags=["memory"])
 	app.include_router(digest.router, prefix="/api/digest", tags=["digest"])
+	app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 
 	@app.get("/healthz")
 	def healthcheck():

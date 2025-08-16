@@ -1,0 +1,31 @@
+{
+	"landmarks": [
+		{"name": "Sagrada Família", "description": "Gaudí's masterpiece basilica with soaring facades.", "category": "culture"},
+		{"name": "Park Güell", "description": "Colorful mosaics and panoramic views over the city.", "category": "culture"},
+		{"name": "Casa Batlló", "description": "Modernist icon with wave-like façade and vibrant tiles.", "category": "culture"},
+		{"name": "La Boqueria Market", "description": "Historic market bursting with Catalan produce.", "category": "food"},
+		{"name": "Gothic Quarter", "description": "Medieval lanes, hidden squares, and artisan shops.", "category": "culture"}
+	],
+	"neighborhoods": [
+		{"name": "El Born", "description": "Boutique streets, tapas bars, and the Picasso Museum."},
+		{"name": "Gràcia", "description": "Village vibe with plazas, indie shops, and cafes."},
+		{"name": "Barceloneta", "description": "Beachfront promenade and seafood eateries."}
+	],
+	"food": [
+		{"name": "Tapas crawl", "description": "Patatas bravas, jamón ibérico, pan con tomate across El Born."},
+		{"name": "Paella by the sea", "description": "Seafood paella at a Barceloneta chiringuito."},
+		{"name": "Vermouth hour", "description": "Aperitif at a classic bodega in Gràcia."}
+	],
+	"adventures": [
+		{"name": "Montjuïc cable car", "description": "Ride to the castle for harbor views."},
+		{"name": "Bicycle beach ride", "description": "Cycle from Port Olímpic to Diagonal Mar."}
+	],
+	"relax": [
+		{"name": "Sunset at Bunkers del Carmel", "description": "Expansive city views from hilltop bunkers."},
+		{"name": "Ciutadella Park picnic", "description": "Rowboats, lawns, and the monumental fountain."}
+	],
+	"hidden_gems": [
+		{"name": "Hospital de Sant Pau", "description": "Lesser-known modernist complex with ornate pavilions."},
+		{"name": "Encants flea market", "description": "Architectural mirrored canopy over vintage stalls."}
+	]
+}

@@ -1,20 +1,8 @@
 [
-	{
-		"name": "Summer Street Fest",
-		"location": "Barcelona, Spain",
-		"start_date": "2025-07-12",
-		"region": "Europe"
-	},
-	{
-		"name": "Cherry Blossom Parade",
-		"location": "Tokyo, Japan",
-		"start_date": "2025-04-05",
-		"region": "Asia"
-	},
-	{
-		"name": "Jazz in the Park",
-		"location": "New Orleans, USA",
-		"start_date": "2025-05-20",
-		"region": "North America"
-	}
+	{"name": "Summer Street Fest", "location": "Barcelona, Spain", "start_date": "2025-07-12", "region": "Europe"},
+	{"name": "Sant Jordi Book Day", "location": "Barcelona, Spain", "start_date": "2025-04-23", "region": "Europe"},
+	{"name": "Cherry Blossom Parade", "location": "Tokyo, Japan", "start_date": "2025-04-05", "region": "Asia"},
+	{"name": "Sumida River Fireworks", "location": "Tokyo, Japan", "start_date": "2025-07-27", "region": "Asia"},
+	{"name": "Jazz in the Park", "location": "New Orleans, USA", "start_date": "2025-05-20", "region": "North America"},
+	{"name": "French Quarter Fest", "location": "New Orleans, USA", "start_date": "2025-04-14", "region": "North America"}
 ]
