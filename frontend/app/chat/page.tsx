@@ -21,10 +21,13 @@ export default function ChatPage() {
 		setInput("");
 		setLoading(true);
 		try {
+			const base_url = localStorage.getItem("gpt_base_url") || undefined;
+			const api_key = localStorage.getItem("gpt_api_key") || undefined;
+			const model = localStorage.getItem("gpt_model") || undefined;
 			const res = await fetch(`${API_BASE}/api/chat/`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ messages: next, destination: destination || null })
+				body: JSON.stringify({ messages: next, destination: destination || null, base_url, api_key, model })
 			});
 			const data = await res.json();
 			setMessages([...next, { role: "assistant", content: data.reply }]);
@@ -52,6 +55,7 @@ export default function ChatPage() {
 					<input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') send(); }} className="flex-1 rounded bg-white/10 px-3 py-2 outline-none" placeholder="Ask for a 2-day foodie plan in Tokyo..."/>
 					<button onClick={send} className="px-4 py-2 rounded bg-brand text-black font-medium hover:bg-brand-light" disabled={loading}>{loading ? '...' : 'Send'}</button>
 				</div>
+				<div className="text-xs text-white/60">Tip: Configure GPT settings in Settings page for live AI.</div>
 			</div>
 		</div>
 	);

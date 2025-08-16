@@ -18,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 							<a href="/memories" className="hover:underline">Memory Journal</a>
 							<a href="/digest" className="hover:underline">Email Digest</a>
 							<a href="/chat" className="hover:underline">Chat</a>
+							<a href="/settings" className="hover:underline">Settings</a>
 						</nav>
 					</div>
 				</header>
