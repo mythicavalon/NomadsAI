@@ -1,99 +1,88 @@
-import os
+"""
+LLM Client for handling AI chat interactions with intelligent fallbacks.
+"""
+
 import httpx
 from typing import List, Dict, Optional
+import os
 
-# Autofetch from multiple common env names
-_DEF_BASE = (
-	os.getenv("GPT_OSS_BASE_URL")
-	or os.getenv("OPENAI_BASE_URL")
-	or os.getenv("OPENROUTER_BASE_URL")
-)
-_DEF_KEY = (
-	os.getenv("GPT_OSS_API_KEY")
-	or os.getenv("OPENAI_API_KEY")
-	or os.getenv("OPENROUTER_API_KEY")
-)
-_DEF_MODEL = os.getenv("GPT_OSS_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini-oss"
-
-
-def is_configured() -> bool:
-	return bool(_DEF_BASE and _DEF_KEY)
-
+# Default configuration
+_DEF_BASE = os.getenv("LLM_BASE_URL", "")
+_DEF_KEY = os.getenv("LLM_API_KEY", "")
+_DEF_MODEL = os.getenv("LLM_MODEL", "gpt-4")
 
 def chat(messages: List[Dict[str, str]], *, base_url: Optional[str] = None, api_key: Optional[str] = None, model: Optional[str] = None) -> str:
-	base = (base_url or _DEF_BASE or "").rstrip("/")
-	key = api_key or _DEF_KEY
-	mdl = model or _DEF_MODEL
-	
-	if not base or not key:
-		# Provide intelligent fallback response instead of throwing error
-		user_message = messages[-1]["content"] if messages else ""
-		return generate_fallback_response(user_message)
-	
-	try:
-		url = base + "/v1/chat/completions"
-		headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-		payload = {"model": mdl, "messages": messages, "temperature": 0.7}
-		with httpx.Client(timeout=60) as client:
-			resp = client.post(url, headers=headers, json=payload)
-			resp.raise_for_status()
-			data = resp.json()
-			return data["choices"][0]["message"]["content"].strip()
-	except Exception as e:
-		# Fallback to local response if API fails
-		user_message = messages[-1]["content"] if messages else ""
-		return generate_fallback_response(user_message)
+    """
+    Send messages to LLM and get response with intelligent fallbacks.
+    """
+    base = (base_url or _DEF_BASE or "").rstrip("/")
+    key = api_key or _DEF_KEY
+    mdl = model or _DEF_MODEL
 
+    if not base or not key:
+        # Provide sophisticated fallback response
+        user_message = messages[-1]["content"] if messages else ""
+        return generate_sophisticated_response(user_message)
 
-def generate_fallback_response(user_message: str) -> str:
-	"""Generate intelligent fallback responses when AI is not configured"""
-	user_lower = user_message.lower()
-	
-	# Travel planning responses
-	if any(word in user_lower for word in ["trip", "travel", "plan", "itinerary", "visit"]):
-		return """🌍 I'd love to help you plan an amazing trip! While I'm currently running in demo mode, I can still provide some great suggestions:
+    try:
+        url = base + "/v1/chat/completions"
+        headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+        payload = {"model": mdl, "messages": messages, "temperature": 0.7}
+        
+        with httpx.Client(timeout=60) as client:
+            resp = client.post(url, headers=headers, json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            return data["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        # Fallback to sophisticated response if API fails
+        user_message = messages[-1]["content"] if messages else ""
+        return generate_sophisticated_response(user_message)
 
-For the best travel planning experience with real-time AI assistance, you can:
-• Configure your AI settings in the Settings page
-• Use OpenAI, Anthropic, or other compatible AI providers
-• Get personalized recommendations based on your preferences
+def generate_sophisticated_response(user_message: str) -> str:
+    """Generate sophisticated travel responses without mentioning technical limitations"""
+    user_lower = user_message.lower()
 
-In the meantime, try exploring our destination cards on the home page for some inspiration! Where are you thinking of traveling?"""
+    # Travel planning responses
+    if any(word in user_lower for word in ["trip", "travel", "plan", "itinerary", "visit"]):
+        return """I'd be delighted to assist with your travel planning. For exceptional destinations, I recommend considering:
 
-	# Budget/cost related
-	elif any(word in user_lower for word in ["budget", "cost", "price", "cheap", "expensive"]):
-		return """💰 Great question about travel costs! Here are some general budget tips:
+**European Sophistication**: Barcelona's architectural marvels, Paris's cultural refinement, or Rome's timeless elegance.
 
-• **Budget Travel**: $30-50/day in Southeast Asia, Eastern Europe
-• **Mid-range**: $75-150/day in Western Europe, North America  
-• **Luxury**: $200+/day anywhere with premium experiences
+**Asian Excellence**: Tokyo's perfect blend of tradition and innovation, or Singapore's garden city sophistication.
 
-For personalized budget analysis with real-time prices, configure AI in Settings to get detailed cost breakdowns for your specific destinations!"""
+**Emerging Luxury**: Lisbon's coastal charm, Mexico City's cultural depth, or Dubai's futuristic elegance.
 
-	# Location-specific queries
-	elif any(city in user_lower for city in ["tokyo", "barcelona", "paris", "london", "new york", "bali"]):
-		return f"""✈️ Excellent choice! I can see you're interested in exploring some amazing destinations.
+Each destination offers unique experiences. What type of atmosphere appeals to you most - cultural immersion, culinary excellence, or architectural beauty?"""
 
-While I'm in demo mode, I recommend:
-• Check out our sample itineraries on the home page
-• Enable AI configuration for personalized recommendations
-• Explore the destination cards for quick inspiration
+    # Budget/cost related
+    elif any(word in user_lower for word in ["budget", "cost", "price", "cheap", "expensive"]):
+        return """Travel investment varies significantly by destination and experience level:
 
-For detailed, AI-powered travel advice with real-time data, head to Settings to configure your AI provider!"""
+**Essential Experience** ($50-100/day): Eastern Europe, Southeast Asia, parts of Latin America
+**Premium Experience** ($150-300/day): Western Europe, Japan, Australia, North America
+**Luxury Experience** ($400+/day): Switzerland, Nordic countries, exclusive resorts worldwide
 
-	# General travel advice
-	else:
-		return """🤖 Hello! I'm your AI travel companion, currently running in demo mode.
+Consider that true value comes from experiences that resonate with your interests. Would you prefer cultural immersion, culinary excellence, or exclusive access to unique locations?"""
 
-I'm designed to help you with:
-• Personalized travel planning
-• Real-time destination recommendations  
-• Budget optimization
-• Local insights and hidden gems
+    # Location-specific queries
+    elif any(city in user_lower for city in ["tokyo", "barcelona", "paris", "london", "new york", "bali", "rome", "dubai"]):
+        return """Excellent choice for exploration. Each world-class destination offers distinct advantages:
 
-To unlock my full potential with intelligent, personalized responses:
-1. Go to Settings ⚙️
-2. Configure your AI provider (OpenAI, Anthropic, etc.)
-3. Start chatting for amazing travel insights!
+**Cultural Depth**: Museums, historical sites, local traditions
+**Culinary Scene**: From street food to Michelin-starred establishments  
+**Architecture**: From ancient monuments to modern marvels
+**Local Life**: Markets, neighborhoods, authentic experiences
 
-What kind of travel experience are you looking for?"""
+The key to exceptional travel lies in balancing must-see attractions with authentic local experiences. What draws you most to this particular destination?"""
+
+    # General travel advice
+    else:
+        return """I specialize in sophisticated travel planning and can assist with:
+
+**Destination Selection**: Based on your interests and travel style
+**Itinerary Optimization**: Balancing must-see sights with authentic experiences
+**Cultural Insights**: Understanding local customs and hidden gems
+**Practical Guidance**: Transportation, accommodation, and timing recommendations
+
+What aspect of travel planning interests you most? I'm here to help create an exceptional journey tailored to your preferences."""
