@@ -33,6 +33,17 @@ npm run dev
 - Backend: Deploy on Render or Railway with start command `uvicorn app.main:app --host 0.0.0.0 --port 8000`
 - Frontend: Deploy on Vercel; set `NEXT_PUBLIC_API_BASE` to backend URL
 
+## Live Demo
+- Frontend: <Vercel URL>
+- Backend: <Render URL>
+
+## GTM
+- See `docs/growth.md` for 5-step GTM, ICPs, and outreach templates.
+- See `docs/roadmap.md` for scaling vision.
+
+## Screenshots
+Place screenshots in `docs/screenshots/` after deployment for the repo landing.
+
 ## Branding / Meta
 - GitHub: mythicavalon
 - Sponsor: https://www.paypal.com/paypalme/amalnair11/

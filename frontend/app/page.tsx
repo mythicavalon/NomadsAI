@@ -15,6 +15,7 @@ export default function HomePage() {
 	const [region, setRegion] = useState<string>("");
 	const [signals, setSignals] = useState<Signal[]>([]);
 	const [itinerary, setItinerary] = useState<any>(null);
+	const [surprise, setSurprise] = useState<string[] | null>(null);
 	const [loading, setLoading] = useState(false);
 
 	const interestOptions = ["culture", "food", "adventure", "relax"];
@@ -43,6 +44,18 @@ export default function HomePage() {
 			});
 			const data = await res.json();
 			setItinerary(data);
+			setSurprise(null);
+		} finally {
+			setLoading(false);
+		}
+	}
+
+	async function getSurprise() {
+		setLoading(true);
+		try {
+			const res = await fetch(`${API_BASE}/api/itineraries/surprise?destination=${encodeURIComponent(destination)}`);
+			const data = await res.json();
+			setSurprise(data.picks || []);
 		} finally {
 			setLoading(false);
 		}
@@ -89,9 +102,10 @@ export default function HomePage() {
 						<option>North America</option>
 					</select>
 				</div>
-				<div className="md:col-span-3 flex items-center gap-3">
+				<div className="md:col-span-3 flex items-center gap-3 flex-wrap">
 					<button onClick={buildItinerary} className="px-4 py-2 rounded bg-brand text-black font-medium hover:bg-brand-light">Build Itinerary</button>
-					{loading && <span className="text-white/60 text-sm">Generating…</span>}
+					<button onClick={getSurprise} className="px-4 py-2 rounded border border-brand text-brand font-medium hover:bg-brand/10">Surprise me</button>
+					{loading && <span className="text-white/60 text-sm">Working…</span>}
 				</div>
 			</section>
 
@@ -115,7 +129,7 @@ export default function HomePage() {
 						<div>
 							<div className="font-medium mb-2">Surprise picks</div>
 							<ul className="list-disc list-inside text-white/80">
-								{itinerary.surprise_picks?.map((s: string, i: number) => <li key={i}>{s}</li>)}
+								{(surprise ?? itinerary.surprise_picks)?.map((s: string, i: number) => <li key={i}>{s}</li>)}
 							</ul>
 						</div>
 					</div>

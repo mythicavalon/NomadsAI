@@ -1,0 +1,8 @@
+[project]
+name = "nomad_ai_backend"
+version = "0.1.0"
+description = "Nomad AI FastAPI backend"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
