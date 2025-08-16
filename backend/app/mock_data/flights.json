@@ -1,0 +1,23 @@
+[
+	{
+		"from": "NYC",
+		"to": "Barcelona, Spain",
+		"price": 380,
+		"found_at": "2025-03-01T10:00:00",
+		"region": "Europe"
+	},
+	{
+		"from": "LAX",
+		"to": "Tokyo, Japan",
+		"price": 520,
+		"found_at": "2025-03-03T09:30:00",
+		"region": "Asia"
+	},
+	{
+		"from": "ORD",
+		"to": "New Orleans, USA",
+		"price": 99,
+		"found_at": "2025-03-02T14:15:00",
+		"region": "North America"
+	}
+]
