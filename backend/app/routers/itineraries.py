@@ -11,6 +11,7 @@ class ItineraryRequest(BaseModel):
 	budget: Optional[str] = Field(None, description="low|medium|high")
 	interests: List[str] = Field(default_factory=list)
 	travel_month: Optional[str] = None
+	online_mode: bool = False
 
 
 class Activity(BaseModel):
@@ -33,6 +34,7 @@ class ItineraryResponse(BaseModel):
 	estimated_budget: Optional[str] = None
 	day_plans: List[DayPlan]
 	surprise_picks: List[str] = []
+	online_mode: bool = False
 
 
 router = APIRouter()
@@ -41,13 +43,15 @@ router = APIRouter()
 @router.post("/", response_model=ItineraryResponse)
 async def build_itinerary(payload: ItineraryRequest):
 	try:
-		return await generate_itinerary(
+		data = await generate_itinerary(
 			destination=payload.destination,
 			days=payload.days,
 			budget=payload.budget,
 			interests=payload.interests,
 			travel_month=payload.travel_month,
 		)
+		data["online_mode"] = payload.online_mode
+		return data
 	except Exception as exc:
 		raise HTTPException(status_code=500, detail=str(exc))
 

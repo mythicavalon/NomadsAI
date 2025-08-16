@@ -18,6 +18,7 @@ export default function HomePage() {
 	const [itinerary, setItinerary] = useState<any>(null);
 	const [surprise, setSurprise] = useState<string[] | null>(null);
 	const [loading, setLoading] = useState(false);
+	const [onlineMode, setOnlineMode] = useState(true);
 
 	const interestOptions = ["culture", "food", "adventure", "relax"];
 	const sampleCities = [
@@ -30,11 +31,12 @@ export default function HomePage() {
 		const params = new URLSearchParams();
 		if (destination) params.set("destination", destination);
 		if (region) params.set("region", region);
+		if (onlineMode) params.set("online_mode", "true");
 		fetch(`${API_BASE}/api/signals/?${params.toString()}`)
 			.then(r => r.json())
 			.then(setSignals)
 			.catch(() => setSignals([]));
-	}, [destination, region]);
+	}, [destination, region, onlineMode]);
 
 	function toggleInterest(value: string) {
 		setInterests(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]);
@@ -46,7 +48,7 @@ export default function HomePage() {
 			const res = await fetch(`${API_BASE}/api/itineraries/`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ destination, days, budget, interests })
+				body: JSON.stringify({ destination, days, budget, interests, online_mode: onlineMode })
 			});
 			const data = await res.json();
 			setItinerary(data);
@@ -116,6 +118,7 @@ export default function HomePage() {
 				<div className="md:col-span-3 flex items-center gap-3 flex-wrap">
 					<button onClick={buildItinerary} className="px-4 py-2 rounded bg-brand text-black font-medium hover:bg-brand-light">Build Itinerary</button>
 					<button onClick={getSurprise} className="px-4 py-2 rounded border border-brand text-brand font-medium hover:bg-brand/10">Surprise me</button>
+					<label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={onlineMode} onChange={e => setOnlineMode(e.target.checked)} /> Online mode</label>
 					{loading && <span className="text-white/60 text-sm">Working…</span>}
 				</div>
 			</section>
@@ -158,11 +161,13 @@ export default function HomePage() {
 								{s.type === 'event' && s.name}
 								{s.type === 'flight_deal' && `${s.from} → ${s.to}`}
 								{s.type === 'hotel_rate' && s.name}
+								{s.type === 'news' && s.title}
 							</div>
 							<div className="text-white/70 text-sm">
 								{s.type === 'event' && `${s.location} — ${s.start_date}`}
 								{s.type === 'flight_deal' && `$${s.price} — found ${s.found_at}`}
 								{s.type === 'hotel_rate' && `${s.city} — from $${s.price_per_night}/night`}
+								{s.type === 'news' && <a className="underline" href={s.href} target="_blank" rel="noreferrer">{s.source || 'news'}</a>}
 							</div>
 						</div>
 					))}
