@@ -8,3 +8,13 @@ pytest==8.2.2
 requests==2.32.3
 httpx==0.27.2
 duckduckgo_search==6.3.7
+# Enhanced AI capabilities
+asyncio-mqtt==0.16.2
+aiofiles==24.1.0
+redis==5.1.1
+# Data processing
+pandas==2.2.3
+numpy==1.26.4
+# Additional utilities
+python-multipart==0.0.12
+email-validator==2.2.0
