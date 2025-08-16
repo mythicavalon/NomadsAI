@@ -1,0 +1,23 @@
+[
+	{
+		"name": "Sunset Plaza",
+		"city": "Barcelona, Spain",
+		"price_per_night": 120,
+		"date": "2025-03-04",
+		"region": "Europe"
+	},
+	{
+		"name": "Sakura Inn",
+		"city": "Tokyo, Japan",
+		"price_per_night": 80,
+		"date": "2025-03-01",
+		"region": "Asia"
+	},
+	{
+		"name": "Crescent Hotel",
+		"city": "New Orleans, USA",
+		"price_per_night": 95,
+		"date": "2025-03-03",
+		"region": "North America"
+	}
+]

@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+	--bg: #0b1220;
+	--fg: #e2e8f0;
+}
+
+html, body {
+	height: 100%;
+}
+
+body {
+	background: var(--bg);
+	color: var(--fg);
+}
+
+.container-max {
+	@apply max-w-6xl mx-auto px-4;
+}
+
+.card {
+	@apply rounded-xl border border-white/10 bg-white/5 backdrop-blur p-4 shadow;
+}
