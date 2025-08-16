@@ -1,22 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Send } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
+const SUGGESTIONS = ["Plan my trip", "Find coworking", "Local food", "Translate phrase"];
+
 export default function ChatPage() {
 	const [destination, setDestination] = useState("");
 	const [messages, setMessages] = useState<Msg[]>([
-		{ role: "assistant", content: "Hi! Ask me about a city and I’ll suggest landmarks, food and current signals." }
+		{ role: "assistant", content: "🌍 Hi! I’m NomadAI. Ask me about trips, hidden gems, or local tips anywhere." }
 	]);
 	const [input, setInput] = useState("");
 	const [loading, setLoading] = useState(false);
+	const listRef = useRef<HTMLDivElement>(null);
 
-	async function send() {
-		if (!input.trim()) return;
-		const next = [...messages, { role: "user", content: input } as Msg];
+	useEffect(() => {
+		listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
+	}, [messages.length]);
+
+	async function send(text?: string) {
+		const content = (text ?? input).trim();
+		if (!content) return;
+		const next = [...messages, { role: "user", content } as Msg];
 		setMessages(next);
 		setInput("");
 		setLoading(true);
@@ -30,32 +39,48 @@ export default function ChatPage() {
 				body: JSON.stringify({ messages: next, destination: destination || null, base_url, api_key, model })
 			});
 			const data = await res.json();
-			setMessages([...next, { role: "assistant", content: data.reply }]);
+			setMessages([...next, { role: "assistant", content: `🌍 ${data.reply || 'I could not generate a reply.'}` }]);
 		} finally {
 			setLoading(false);
 		}
 	}
 
+	function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			send();
+		}
+	}
+
 	return (
-		<div className="space-y-6">
-			<h1 className="text-2xl font-semibold">Nomad AI Chat</h1>
-			<div className="card">
-				<label className="block text-sm text-white/70">Destination context (optional)</label>
-				<input value={destination} onChange={e => setDestination(e.target.value)} placeholder="e.g., Barcelona, Spain" className="mt-1 w-full rounded bg-white/10 px-3 py-2 outline-none"/>
+		<div className="relative">
+			<div className="mb-4">
+				<label className="block text-sm text-white/80">Destination context (optional)</label>
+				<input value={destination} onChange={e => setDestination(e.target.value)} placeholder="e.g., Barcelona, Spain" className="mt-1 w-full rounded-2xl bg-white/10 px-4 py-2 outline-none shadow"/>
 			</div>
-			<div className="card space-y-3">
-				<div className="space-y-2">
-					{messages.map((m, i) => (
-						<div key={i} className="text-sm">
-							<span className="text-white/60">{m.role === 'user' ? 'You' : 'Nomad AI'}:</span> {m.content}
+
+			<div ref={listRef} className="card h-[62vh] overflow-y-auto space-y-3 p-4 rounded-2xl">
+				{messages.map((m, i) => (
+					<div key={i} className={m.role === 'assistant' ? "flex justify-start" : "flex justify-end"}>
+						<div className={m.role === 'assistant' ? "max-w-[80%] rounded-2xl bg-white/10 shadow px-4 py-2" : "max-w-[80%] rounded-2xl bg-brand text-black shadow px-4 py-2"}>
+							<div className="text-sm whitespace-pre-wrap leading-relaxed">{m.content}</div>
 						</div>
+					</div>
+				))}
+			</div>
+
+			<div className="sticky bottom-4">
+				<div className="mb-2 flex gap-2 flex-wrap">
+					{SUGGESTIONS.map(s => (
+						<button key={s} onClick={() => send(s)} className="rounded-full bg-white/10 hover:bg-white/15 border border-white/15 px-3 py-1 text-xs shadow">{s}</button>
 					))}
 				</div>
-				<div className="flex gap-2">
-					<input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') send(); }} className="flex-1 rounded bg-white/10 px-3 py-2 outline-none" placeholder="Ask for a 2-day foodie plan in Tokyo..."/>
-					<button onClick={send} className="px-4 py-2 rounded bg-brand text-black font-medium hover:bg-brand-light" disabled={loading}>{loading ? '...' : 'Send'}</button>
+				<div className="flex items-center gap-2 rounded-2xl bg-white/10 border border-white/15 shadow px-3 py-2">
+					<input value={input} onChange={e => setInput(e.target.value)} onKeyDown={onKeyDown} placeholder="Ask anything…" className="flex-1 bg-transparent outline-none"/>
+					<button onClick={() => send()} disabled={loading} className="rounded-full bg-brand text-black px-3 py-2 hover:bg-brand-light shadow">
+						<Send size={16} />
+					</button>
 				</div>
-				<div className="text-xs text-white/60">Tip: Configure GPT settings in Settings page for live AI.</div>
 			</div>
 		</div>
 	);
