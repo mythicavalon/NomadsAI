@@ -1,25 +1,31 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send, User, Bot, Settings, Brain, Zap } from "lucide-react";
+import { Send, User, Bot, Sparkles, Brain, Zap, MessageCircle, Loader, MapPin } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
 type Msg = { role: "user" | "assistant"; content: string; timestamp?: string };
 
 const SUGGESTIONS = [
-	"Plan my 5-day trip to Tokyo",
+	"Plan my 5-day adventure in Tokyo",
 	"Find budget flights to Barcelona", 
 	"What's happening in NYC this weekend?",
-	"Compare costs: Bali vs Thailand",
-	"Local hidden gems in Prague",
-	"Best coworking spaces in Lisbon"
+	"Compare costs: Bali vs Thailand for nomads",
+	"Hidden gems in Prague for culture lovers",
+	"Best coworking spaces in Lisbon",
+	"Romantic getaway ideas for couples",
+	"Solo female travel safety tips for Southeast Asia"
 ];
 
 export default function ChatPage() {
 	const [destination, setDestination] = useState("");
 	const [messages, setMessages] = useState<Msg[]>([
-		{ role: "assistant", content: "🌍 Hi! I'm your AI travel companion. I learn from our conversations and remember your preferences. Where would you like to explore today?", timestamp: new Date().toISOString() }
+		{ 
+			role: "assistant", 
+			content: "🌍 Welcome to your AI travel companion! I'm here to help you discover amazing destinations, plan perfect itineraries, and make your travel dreams come true. I learn from our conversations and remember your preferences to give you increasingly personalized recommendations.\n\nWhat adventure are you planning today?", 
+			timestamp: new Date().toISOString() 
+		}
 	]);
 	const [input, setInput] = useState("");
 	const [loading, setLoading] = useState(false);
@@ -99,7 +105,7 @@ export default function ChatPage() {
 				throw new Error("Failed to get response reader");
 			}
 
-			let fullResponse = "";
+			let assistantResponse = "";
 			
 			while (true) {
 				const { done, value } = await reader.read();
@@ -112,67 +118,34 @@ export default function ChatPage() {
 					if (line.startsWith('data: ')) {
 						try {
 							const data = JSON.parse(line.slice(6));
-							
-							if (data.type === 'content') {
-								fullResponse += data.content;
-								setCurrentResponse(fullResponse);
+							if (data.type === 'content' && data.content) {
+								assistantResponse += data.content;
+								setCurrentResponse(assistantResponse);
 							} else if (data.type === 'done') {
-								// Response complete
-								const assistantMessage: Msg = { 
-									role: "assistant", 
-									content: fullResponse,
-									timestamp: new Date().toISOString()
-								};
-								setMessages([...newMessages, assistantMessage]);
-								setCurrentResponse("");
 								setStreaming(false);
-								
-								// Reload user memory after conversation
-								if (userId) {
-									setTimeout(() => loadUserMemory(userId), 1000);
-								}
-								return;
+								setMessages([...newMessages, { 
+									role: "assistant", 
+									content: assistantResponse, 
+									timestamp: new Date().toISOString() 
+								}]);
+								setCurrentResponse("");
+								break;
 							} else if (data.type === 'error') {
 								throw new Error(data.error);
 							}
-						} catch (parseError) {
-							// Ignore parsing errors for incomplete JSON
+						} catch (e) {
+							// Skip invalid JSON lines
 						}
 					}
 				}
 			}
 		} catch (error) {
-			console.error("Streaming failed:", error);
-			// Fallback to regular chat
-			try {
-				const response = await fetch(`${API_BASE}/api/chat/`, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ 
-						messages: newMessages, 
-						destination: destination || null,
-						user_id: userId,
-						stream: false,
-						base_url: localStorage.getItem("gpt_base_url") || undefined,
-						api_key: localStorage.getItem("gpt_api_key") || undefined,
-						model: localStorage.getItem("gpt_model") || undefined
-					})
-				});
-				const data = await response.json();
-				const assistantMessage: Msg = { 
-					role: "assistant", 
-					content: data.reply || 'I could not generate a reply.',
-					timestamp: new Date().toISOString()
-				};
-				setMessages([...newMessages, assistantMessage]);
-			} catch (fallbackError) {
-				const errorMessage: Msg = { 
-					role: "assistant", 
-					content: "I'm experiencing technical difficulties. Please try again.",
-					timestamp: new Date().toISOString()
-				};
-				setMessages([...newMessages, errorMessage]);
-			}
+			console.error('Chat error:', error);
+			setMessages([...newMessages, { 
+				role: "assistant", 
+				content: "I apologize, but I encountered an error while processing your request. Please try again or check your connection.", 
+				timestamp: new Date().toISOString() 
+			}]);
 		} finally {
 			setLoading(false);
 			setStreaming(false);
@@ -180,254 +153,212 @@ export default function ChatPage() {
 		}
 	}
 
-	function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-		if (e.key === 'Enter' && !e.shiftKey) {
-			e.preventDefault();
-			sendMessage();
-		}
+	function formatTimestamp(timestamp?: string) {
+		if (!timestamp) return "";
+		return new Date(timestamp).toLocaleTimeString('en-US', { 
+			hour: '2-digit', 
+			minute: '2-digit' 
+		});
 	}
 
-	const clearMemory = async () => {
-		if (!userId) return;
-		try {
-			await fetch(`${API_BASE}/api/chat/memory/${userId}`, { method: 'DELETE' });
-			setUserMemory(null);
-			localStorage.removeItem("nomad_user_id");
-			window.location.reload();
-		} catch (error) {
-			console.error("Failed to clear memory:", error);
-		}
-	};
-
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-			{/* Header */}
-			<div className="border-b border-white/10 bg-white/5 backdrop-blur">
-				<div className="max-w-6xl mx-auto px-4 py-4">
-					<div className="flex items-center justify-between">
-						<div className="flex items-center gap-3">
-							<div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center justify-center">
-								<Brain className="w-6 h-6 text-white" />
-							</div>
-							<div>
-								<h1 className="text-xl font-bold text-white">NomadAI Chat</h1>
-								<p className="text-sm text-white/60">Your AI travel companion with memory</p>
-							</div>
+		<div className="h-[calc(100vh-200px)] flex flex-col">
+			{/* Chat Header */}
+			<div className="glass-strong rounded-2xl p-6 mb-6">
+				<div className="flex items-center justify-between">
+					<div className="flex items-center gap-4">
+						<div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center animate-glow">
+							<Bot className="w-7 h-7 text-white" />
 						</div>
-						<div className="flex items-center gap-3">
-							{userMemory && (
-								<button
-									onClick={() => setShowMemory(!showMemory)}
-									className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 text-sm flex items-center gap-2 transition-colors"
-								>
-									<User className="w-4 h-4" />
-									Memory ({userMemory.interaction_count} chats)
-								</button>
-							)}
-							<a href="/settings" className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 transition-colors">
-								<Settings className="w-5 h-5" />
-							</a>
+						<div>
+							<h1 className="heading-md">AI Travel Chat</h1>
+							<p className="text-white/70">Your intelligent travel companion</p>
 						</div>
 					</div>
+					
+					{userMemory && (
+						<button
+							onClick={() => setShowMemory(!showMemory)}
+							className="btn-secondary flex items-center gap-2"
+						>
+							<Brain className="w-4 h-4" />
+							Memory
+						</button>
+					)}
 				</div>
+
+				{/* Destination Context */}
+				{destination && (
+					<div className="mt-4 p-3 glass rounded-xl flex items-center gap-2">
+						<MapPin className="w-4 h-4 text-brand-400" />
+						<span className="text-white/80">Context: {destination}</span>
+						<button 
+							onClick={() => setDestination("")}
+							className="ml-auto text-white/60 hover:text-white"
+						>
+							×
+						</button>
+					</div>
+				)}
 			</div>
 
-			<div className="max-w-6xl mx-auto px-4 py-6">
-				<div className="grid lg:grid-cols-12 gap-6">
-					{/* Main Chat */}
-					<div className="lg:col-span-8">
-						{/* Destination Context */}
-						<div className="mb-4">
-							<label className="block text-sm text-white/80 mb-2">Travel destination (optional)</label>
-							<input 
-								value={destination} 
-								onChange={e => setDestination(e.target.value)} 
-								placeholder="e.g., Barcelona, Spain" 
-								className="w-full rounded-2xl bg-white/10 border border-white/20 px-4 py-3 text-white placeholder-white/50 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition-all"
-							/>
-						</div>
+			{/* Memory Panel */}
+			{showMemory && userMemory && (
+				<div className="glass rounded-2xl p-4 mb-4">
+					<h3 className="font-semibold text-white mb-2 flex items-center gap-2">
+						<Brain className="w-4 h-4 text-brand-400" />
+						AI Memory
+					</h3>
+					<div className="text-sm text-white/70 space-y-1">
+						<p><strong>Interactions:</strong> {userMemory.interaction_count || 0}</p>
+						{userMemory.preferences && Object.keys(userMemory.preferences).length > 0 && (
+							<p><strong>Preferences:</strong> {JSON.stringify(userMemory.preferences)}</p>
+						)}
+					</div>
+				</div>
+			)}
 
-						{/* Chat Messages */}
-						<div ref={listRef} className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-2xl h-[65vh] overflow-y-auto space-y-6">
-							{messages.map((m, i) => (
-								<div key={i} className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
-									<div className={`flex items-start gap-3 max-w-[85%] ${m.role === 'assistant' ? '' : 'flex-row-reverse'}`}>
-										<div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-											m.role === 'assistant' 
-												? 'bg-gradient-to-r from-emerald-400 to-cyan-400' 
-												: 'bg-gradient-to-r from-blue-400 to-purple-400'
-										}`}>
-											{m.role === 'assistant' ? <Bot className="w-4 h-4 text-white" /> : <User className="w-4 h-4 text-white" />}
-										</div>
-										<div className={`rounded-2xl px-4 py-3 shadow-lg ${
-											m.role === 'assistant' 
-												? 'bg-gradient-to-r from-emerald-500/90 to-cyan-500/90 text-white' 
-												: 'bg-gradient-to-r from-blue-500/90 to-purple-500/90 text-white'
-										}`}>
-											<div className="text-sm whitespace-pre-wrap leading-relaxed">{m.content}</div>
-											{m.timestamp && (
-												<div className="text-xs opacity-70 mt-2">
-													{new Date(m.timestamp).toLocaleTimeString()}
-												</div>
-											)}
-										</div>
-									</div>
+			{/* Messages Container */}
+			<div 
+				ref={listRef}
+				className="flex-1 overflow-y-auto space-y-4 mb-6 pr-2"
+				style={{ scrollBehavior: 'smooth' }}
+			>
+				{messages.map((msg, idx) => (
+					<div
+						key={idx}
+						className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+					>
+						{msg.role === 'assistant' && (
+							<div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center flex-shrink-0 mt-1">
+								<Bot className="w-4 h-4 text-white" />
+							</div>
+						)}
+						
+						<div className={`max-w-[80%] ${msg.role === 'user' ? 'order-1' : ''}`}>
+							<div
+								className={`p-4 rounded-2xl ${
+									msg.role === 'user'
+										? 'bg-gradient-to-r from-brand-500 to-brand-600 text-white ml-auto'
+										: 'glass text-white'
+								}`}
+							>
+								<div className="whitespace-pre-wrap leading-relaxed">
+									{msg.content}
 								</div>
-							))}
-							
-							{/* Streaming Response */}
-							{streaming && currentResponse && (
-								<div className="flex justify-start">
-									<div className="flex items-start gap-3 max-w-[85%]">
-										<div className="w-8 h-8 rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center justify-center">
-											<Bot className="w-4 h-4 text-white" />
-										</div>
-										<div className="rounded-2xl px-4 py-3 bg-gradient-to-r from-emerald-500/90 to-cyan-500/90 text-white shadow-lg">
-											<div className="text-sm whitespace-pre-wrap leading-relaxed">{currentResponse}</div>
-											<div className="flex items-center gap-1 mt-2">
-												<Zap className="w-3 h-3 animate-pulse" />
-												<span className="text-xs opacity-70">Thinking...</span>
-											</div>
-										</div>
-									</div>
+							</div>
+							{msg.timestamp && (
+								<div className={`text-xs text-white/50 mt-1 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
+									{formatTimestamp(msg.timestamp)}
 								</div>
 							)}
 						</div>
 
-						{/* Input Area */}
-						<div className="mt-4">
-							{/* Suggestion Chips */}
-							<div className="mb-3 flex gap-2 flex-wrap">
-								{SUGGESTIONS.map(s => (
-									<button 
-										key={s} 
-										onClick={() => sendMessage(s)} 
-										disabled={loading}
-										className="rounded-full border border-white/20 bg-white/10 hover:bg-white/20 px-4 py-2 text-sm text-white/80 hover:text-white transition-all disabled:opacity-50"
-									>
-										{s}
-									</button>
-								))}
+						{msg.role === 'user' && (
+							<div className="w-8 h-8 rounded-xl bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center flex-shrink-0 mt-1 order-2">
+								<User className="w-4 h-4 text-white" />
 							</div>
-							
-							{/* Chat Input */}
-							<div className="flex items-end gap-3 rounded-2xl bg-white/10 border border-white/20 shadow-lg p-3">
-								<input 
-									value={input} 
-									onChange={e => setInput(e.target.value)} 
-									onKeyDown={onKeyDown} 
-									placeholder="Ask me anything about travel..." 
-									disabled={loading}
-									className="flex-1 bg-transparent outline-none text-white placeholder-white/50 disabled:opacity-50 text-lg"
-								/>
-								<button 
-									onClick={() => sendMessage()} 
-									disabled={loading || !input.trim()} 
-									className="rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-6 py-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-								>
-									<Send size={20} />
-								</button>
+						)}
+					</div>
+				))}
+
+				{/* Streaming Response */}
+				{streaming && currentResponse && (
+					<div className="flex gap-4 justify-start">
+						<div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center flex-shrink-0 mt-1">
+							<Bot className="w-4 h-4 text-white" />
+						</div>
+						<div className="max-w-[80%]">
+							<div className="p-4 rounded-2xl glass text-white">
+								<div className="whitespace-pre-wrap leading-relaxed">
+									{currentResponse}
+									<span className="inline-block w-2 h-5 bg-brand-400 ml-1 animate-pulse"></span>
+								</div>
 							</div>
 						</div>
 					</div>
+				)}
 
-					{/* Sidebar */}
-					<div className="lg:col-span-4 space-y-6">
-						{/* User Memory Panel */}
-						{showMemory && userMemory && (
-							<div className="rounded-2xl bg-white/5 border border-white/10 p-6 backdrop-blur">
-								<h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-									<Brain className="w-5 h-5" />
-									Your Travel Memory
-								</h3>
-								
-								<div className="space-y-4">
-									<div>
-										<h4 className="text-sm font-medium text-white/80 mb-2">Preferences</h4>
-										<div className="text-sm text-white/60">
-											{Object.keys(userMemory.preferences).length > 0 
-												? Object.entries(userMemory.preferences).map(([k, v]) => (
-													<div key={k} className="mb-1">{k}: {String(v)}</div>
-												))
-												: "No preferences learned yet"
-											}
-										</div>
-									</div>
-
-									<div>
-										<h4 className="text-sm font-medium text-white/80 mb-2">Recent Destinations</h4>
-										<div className="text-sm text-white/60">
-											{userMemory.travel_history.length > 0
-												? userMemory.travel_history.slice(-5).map((trip: any, i: number) => (
-													<div key={i} className="mb-1">{trip.destination}</div>
-												))
-												: "No travel history yet"
-											}
-										</div>
-									</div>
-
-									<button
-										onClick={clearMemory}
-										className="w-full px-3 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm transition-colors"
-									>
-										Clear Memory
-									</button>
+				{/* Loading Indicator */}
+				{loading && !streaming && (
+					<div className="flex gap-4 justify-start">
+						<div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center flex-shrink-0 mt-1">
+							<Loader className="w-4 h-4 text-white animate-spin" />
+						</div>
+						<div className="glass rounded-2xl p-4">
+							<div className="flex items-center gap-2 text-white/70">
+								<div className="flex gap-1">
+									<div className="w-2 h-2 bg-brand-400 rounded-full animate-bounce"></div>
+									<div className="w-2 h-2 bg-brand-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+									<div className="w-2 h-2 bg-brand-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
 								</div>
-							</div>
-						)}
-
-						{/* AI Features */}
-						<div className="rounded-2xl bg-white/5 border border-white/10 p-6 backdrop-blur">
-							<h3 className="text-lg font-semibold text-white mb-4">AI Features</h3>
-							<div className="space-y-3">
-								<div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
-									<Brain className="w-5 h-5 text-emerald-400" />
-									<div>
-										<div className="text-sm font-medium text-white">Memory & Learning</div>
-										<div className="text-xs text-white/60">Remembers your preferences</div>
-									</div>
-								</div>
-								<div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
-									<Zap className="w-5 h-5 text-cyan-400" />
-									<div>
-										<div className="text-sm font-medium text-white">Real-time Data</div>
-										<div className="text-xs text-white/60">Live travel information</div>
-									</div>
-								</div>
-								<div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
-									<Bot className="w-5 h-5 text-purple-400" />
-									<div>
-										<div className="text-sm font-medium text-white">Smart Tools</div>
-										<div className="text-xs text-white/60">Budget analysis & search</div>
-									</div>
-								</div>
+								<span>Thinking...</span>
 							</div>
 						</div>
+					</div>
+				)}
+			</div>
 
-						{/* Quick Actions */}
-						<div className="rounded-2xl bg-white/5 border border-white/10 p-6 backdrop-blur">
-							<h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
-							<div className="grid gap-3">
-								<button 
-									onClick={() => sendMessage("Plan my perfect weekend getaway")}
-									className="p-3 rounded-xl bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 hover:from-emerald-500/30 hover:to-cyan-500/30 text-white text-left transition-all border border-white/10"
-								>
-									Plan Weekend Trip
-								</button>
-								<button 
-									onClick={() => sendMessage("Find me budget travel deals")}
-									className="p-3 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 text-white text-left transition-all border border-white/10"
-								>
-									Find Travel Deals
-								</button>
-								<button 
-									onClick={() => sendMessage("Compare destinations for digital nomads")}
-									className="p-3 rounded-xl bg-gradient-to-r from-orange-500/20 to-red-500/20 hover:from-orange-500/30 hover:to-red-500/30 text-white text-left transition-all border border-white/10"
-								>
-									Compare Destinations
-								</button>
-							</div>
-						</div>
+			{/* Suggestions */}
+			{messages.length <= 1 && (
+				<div className="mb-6">
+					<h3 className="text-white/80 font-medium mb-3 flex items-center gap-2">
+						<Sparkles className="w-4 h-4 text-brand-400" />
+						Try asking about:
+					</h3>
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+						{SUGGESTIONS.map((suggestion, idx) => (
+							<button
+								key={idx}
+								onClick={() => sendMessage(suggestion)}
+								disabled={loading}
+								className="text-left p-3 glass rounded-xl hover:glass-strong transition-all duration-300 text-white/80 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]"
+							>
+								{suggestion}
+							</button>
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* Input Area */}
+			<div className="glass-strong rounded-2xl p-4">
+				<div className="flex gap-4">
+					<input
+						type="text"
+						value={input}
+						onChange={(e) => setInput(e.target.value)}
+						onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+						placeholder="Ask me anything about travel... (Press Enter to send)"
+						disabled={loading}
+						className="flex-1 input-premium disabled:opacity-50 disabled:cursor-not-allowed"
+					/>
+					<button
+						onClick={() => sendMessage()}
+						disabled={loading || !input.trim()}
+						className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+					>
+						<Send className="w-4 h-4" />
+						Send
+					</button>
+				</div>
+				
+				<div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
+					<div className="flex items-center gap-4">
+						<label className="flex items-center gap-2 text-sm text-white/70">
+							<MapPin className="w-4 h-4" />
+							<input
+								type="text"
+								value={destination}
+								onChange={(e) => setDestination(e.target.value)}
+								placeholder="Add destination context (optional)"
+								className="bg-transparent border-none outline-none placeholder-white/50 text-white/80"
+							/>
+						</label>
+					</div>
+					
+					<div className="text-xs text-white/50">
+						Powered by AI • {messages.length - 1} messages
 					</div>
 				</div>
 			</div>
