@@ -12,6 +12,10 @@ class ItineraryRequest(BaseModel):
 	interests: List[str] = Field(default_factory=list)
 	travel_month: Optional[str] = None
 	online_mode: bool = False
+	# Optional GPT overrides (useful when server env is not set)
+	base_url: Optional[str] = None
+	api_key: Optional[str] = None
+	model: Optional[str] = None
 
 
 class Activity(BaseModel):
@@ -49,6 +53,9 @@ async def build_itinerary(payload: ItineraryRequest):
 			budget=payload.budget,
 			interests=payload.interests,
 			travel_month=payload.travel_month,
+			base_url=payload.base_url,
+			api_key=payload.api_key,
+			model=payload.model,
 		)
 		data["online_mode"] = payload.online_mode
 		return data

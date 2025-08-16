@@ -45,10 +45,13 @@ export default function HomePage() {
 	async function buildItinerary() {
 		setLoading(true);
 		try {
+			const base_url = localStorage.getItem("gpt_base_url") || undefined;
+			const api_key = localStorage.getItem("gpt_api_key") || undefined;
+			const model = localStorage.getItem("gpt_model") || undefined;
 			const res = await fetch(`${API_BASE}/api/itineraries/`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ destination, days, budget, interests, online_mode: onlineMode })
+				body: JSON.stringify({ destination, days, budget, interests, online_mode: onlineMode, base_url, api_key, model })
 			});
 			const data = await res.json();
 			setItinerary(data);

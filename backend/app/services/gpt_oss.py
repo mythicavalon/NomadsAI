@@ -53,9 +53,12 @@ async def generate_itinerary(
 	budget: Optional[str],
 	interests: List[str],
 	travel_month: Optional[str],
+	base_url: Optional[str] = None,
+	api_key: Optional[str] = None,
+	model: Optional[str] = None,
 ) -> dict:
 	# If LLM configured, synthesize a plan using wiki attractions and preferences
-	if llm_ready():
+	if llm_ready() or base_url:
 		attractions = fetch_top_attractions(destination, max_items=12)
 		bullets = "\n".join([f"- {a['title']}: {a['extract'][:140]}" for a in attractions]) or "- city walk"
 		prompt = [
@@ -63,14 +66,12 @@ async def generate_itinerary(
 			{"role": "user", "content": f"Destination: {destination}\nDays: {days}\nBudget: {budget or 'medium'}\nInterests: {', '.join(interests) or 'general'}\nTravel month: {travel_month or 'unspecified'}\nCandidate attractions and context:\n{bullets}"},
 		]
 		try:
-			resp = llm_chat(prompt)
-			# naive parse: find first '{' and last '}'
+			resp = llm_chat(prompt, base_url=base_url, api_key=api_key, model=model)
 			start = resp.find('{')
 			end = resp.rfind('}')
 			if start != -1 and end != -1:
 				import json as _json
 				parsed = _json.loads(resp[start:end+1])
-				# minimal normalization
 				for d in parsed.get("day_plans", []):
 					for a in d.get("activities", []):
 						if "time" not in a: a["time"] = "09:00"
