@@ -34,8 +34,8 @@ npm run dev
 - Frontend: Deploy on Vercel; set `NEXT_PUBLIC_API_BASE` to backend URL
 
 ## Live Demo
-- Frontend: <Vercel URL>
-- Backend: <Render URL>
+- Frontend: https://nomads-ai-o7lq.vercel.app/
+- Backend: https://nomadai-backend.onrender.com
 
 ## GTM
 - See `docs/growth.md` for 5-step GTM, ICPs, and outreach templates.

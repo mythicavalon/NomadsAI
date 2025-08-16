@@ -8,5 +8,5 @@
 - Frontend (Vercel): set env `NEXT_PUBLIC_API_BASE` to backend URL.
 
 ## Live URLs (fill after deploy)
-- Frontend: <your-vercel-url>
-- Backend: <your-render-url>
+- Frontend: https://nomads-ai-o7lq.vercel.app/
+- Backend: https://nomadai-backend.onrender.com
