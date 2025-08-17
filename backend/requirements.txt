@@ -15,6 +15,11 @@ redis==5.1.1
 # Data processing
 pandas==2.2.3
 numpy==1.26.4
+
+# Pipeline dependencies
+jsonschema>=4.0.0
+sentence-transformers>=2.2.0
+
 # Additional utilities
 python-multipart==0.0.12
 email-validator==2.2.0

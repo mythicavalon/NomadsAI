@@ -178,7 +178,8 @@ class ItineraryPipeline:
         """Get the current status of the pipeline components."""
         try:
             # Check database status
-            with self.retriever._get_db_connection() as conn:
+            import sqlite3
+            with sqlite3.connect(self.retriever.db_path) as conn:
                 cursor = conn.execute("SELECT COUNT(*) FROM embeddings")
                 total_embeddings = cursor.fetchone()[0]
                 

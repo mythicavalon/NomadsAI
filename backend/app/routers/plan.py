@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List
 from ..models import TravelPlanRequest, TravelPlanResponse
 from ..services.gpt_oss import generate_itinerary
+from ..pipeline import generate_itinerary_pipeline
 from ..services.llm_client import is_configured
 import json
 
@@ -35,16 +36,29 @@ async def plan_travel(request: TravelPlanRequest):
         if not request.interests:
             raise HTTPException(status_code=400, detail="At least one interest must be selected")
         
-        # Generate itinerary using AI
-        itinerary_data = await generate_itinerary(
-            destination=request.destination,
-            days=days,
-            budget=request.budget,
-            interests=request.interests,
-            travel_month=start_date.strftime("%B"),
-            from_city=request.from_city,
-            travelers=request.travelers
-        )
+        # Generate itinerary using the new two-stage pipeline
+        try:
+            logger.info(f"Using new pipeline for {request.destination}")
+            itinerary_data = await generate_itinerary_pipeline(
+                destination=request.destination,
+                days=days,
+                from_city=request.from_city,
+                budget=request.budget,
+                interests=request.interests
+            )
+            logger.info("Pipeline generation successful")
+        except Exception as pipeline_error:
+            logger.warning(f"Pipeline failed, falling back to legacy system: {pipeline_error}")
+            # Fallback to legacy system
+            itinerary_data = await generate_itinerary(
+                destination=request.destination,
+                days=days,
+                budget=request.budget,
+                interests=request.interests,
+                travel_month=start_date.strftime("%B"),
+                from_city=request.from_city,
+                travelers=request.travelers
+            )
         
         # Debug logging
         print(f"DEBUG: itinerary_data type: {type(itinerary_data)}")
@@ -52,10 +66,10 @@ async def plan_travel(request: TravelPlanRequest):
         print(f"DEBUG: Checking for 'itinerary' key: {'itinerary' in itinerary_data if isinstance(itinerary_data, dict) else 'Not a dict'}")
         print(f"DEBUG: Available keys: {list(itinerary_data.keys()) if isinstance(itinerary_data, dict) else 'Not a dict'}")
         
-        # Extract the structured data from the AI response
+        # Extract the structured data from the pipeline response
         try:
             if isinstance(itinerary_data, dict) and "itinerary" in itinerary_data:
-                # AI response is properly structured with new schema
+                # Pipeline response is properly structured with new schema
                 summary = itinerary_data.get("summary", f"Your {days}-day journey from {request.from_city} to {request.destination}")
                 itinerary = itinerary_data.get("itinerary", [])
                 
@@ -70,7 +84,12 @@ async def plan_travel(request: TravelPlanRequest):
                 cultural_insights = itinerary_data.get("cultural_insights", "Immerse yourself in local culture and traditions.")
                 local_recommendations = itinerary_data.get("local_recommendations", "Explore authentic local experiences beyond tourist spots.")
                 travel_tips = itinerary_data.get("travel_tips", f"Plan your trip from {request.from_city} to {request.destination} with local insights.")
-                ai_provider = itinerary_data.get("ai_provider", "NVIDIA GPT-OSS-120B")
+                ai_provider = itinerary_data.get("ai_provider", "Two-Stage Pipeline + GPT-OSS")
+                
+                # Check if pipeline info is available
+                pipeline_info = itinerary_data.get("pipeline_info", {})
+                if pipeline_info:
+                    logger.info(f"Pipeline stages completed: {pipeline_info.get('stages_completed', [])}")
             else:
                 # Fallback to basic structure - match the frontend interface with destination-specific activities
                 summary = f"Your {days}-day journey from {request.from_city} to {request.destination}"

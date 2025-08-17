@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 from .routers import itineraries, signals, memory, digest, chat, plan
 from .services.llm_client import get_ai_provider_info
+from .startup import initialize_pipeline
 
 
 def create_app() -> FastAPI:
@@ -35,6 +36,11 @@ def create_app() -> FastAPI:
 	app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 	app.include_router(plan.router, prefix="/api/plan", tags=["plan"])
 
+	@app.on_event("startup")
+	async def startup_event():
+		"""Initialize pipeline components on startup."""
+		await initialize_pipeline()
+
 	@app.get("/healthz")
 	def healthcheck():
 		return {"status": "ok"}
@@ -49,11 +55,18 @@ def create_app() -> FastAPI:
 			"version": "2.0",
 			"features": [
 				"GPT-OSS-120B Integration",
+				"Two-Stage Pipeline",
 				"Advanced Travel Planning",
 				"Cultural Intelligence",
 				"Real-time AI Responses"
 			]
 		}
+
+	@app.get("/api/pipeline-status")
+	def pipeline_status():
+		"""Get pipeline status and component health"""
+		from .startup import get_pipeline_status
+		return get_pipeline_status()
 
 	return app
 
