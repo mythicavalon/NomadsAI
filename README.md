@@ -1,319 +1,279 @@
-# 🚀 NomadAI 2.0 — Your Intelligent Travel Companion
+# NomadsAI - AI-Powered Travel Intelligence Platform
 
-> **The world's most sophisticated AI travel platform that learns, predicts, and optimizes every journey.**
+> **Enterprise-grade travel planning powered by NVIDIA's advanced AI technology**
 
-[![Live Demo](https://img.shields.io/badge/🌍_Live_Demo-nomads--ai--o7lq.vercel.app-brightgreen)](https://nomads-ai-o7lq.vercel.app/)
-[![Backend API](https://img.shields.io/badge/🔗_API-nomadai--backend.onrender.com-blue)](https://nomadai-backend.onrender.com)
-[![MIT License](https://img.shields.io/badge/📄_License-MIT-yellow.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Next.js 14](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com/)
 
-## ✨ What Makes NomadAI Different
+## 🚀 Project Overview
 
-- **🧠 AI Memory & Learning**: Personal AI agent that remembers your preferences and adapts over time
-- **⚡ Real-time Intelligence**: Live price monitoring, weather alerts, and dynamic itinerary optimization
-- **🎯 Hyper-Personalization**: Tailored recommendations based on your travel DNA and behavior patterns
-- **💬 Streaming AI Chat**: Natural conversations with your intelligent travel companion
-- **🔍 Smart Search**: Google-like autocomplete with 25+ global destinations and trending insights
-- **📸 Memory Polaroids**: Beautiful polaroid-style travel memories with location, mood, and weather
-- **🏆 Premium Experience**: Sophisticated UI/UX with glassmorphism and premium animations
+NomadsAI is a sophisticated travel planning platform that combines cutting-edge AI technology with enterprise-grade architecture to deliver personalized travel experiences. Built with modern web technologies and powered by NVIDIA's GPT-OSS-120B model, it provides intelligent, secure, and scalable travel planning solutions.
 
-## 🌟 Recent Major Updates (v2.0)
+### ✨ Key Features
 
-### 🎨 Complete UI/UX Transformation
-- **Premium Design System**: Sophisticated glassmorphism with professional gradients
-- **Travel-Focused Branding**: New airplane logo with location pin accent
-- **Premium Typography**: Playfair Display headers with Inter body text
-- **Mobile-First**: Enhanced touch interactions and responsive design
-- **Accessibility**: Focus states, reduced motion, and high contrast support
-
-### 🔍 Intelligent Search Experience
-- **Real-time Autocomplete**: Google-style city search with instant suggestions
-- **25+ Global Cities**: Comprehensive database including digital nomad hotspots
-- **Trending Indicators**: Visual badges for popular destinations
-- **Smart Filtering**: Search by city name or country with instant results
-
-### 📸 Polaroid Memory System
-- **Visual Memories**: Instagram-style polaroid cards with travel photos
-- **Rich Metadata**: Location, date, weather, mood, and travel companions
-- **Interactive Creation**: Visual photo selection with mood and weather options
-- **Authentic Design**: Realistic polaroid frames with shadows and rotations
-
-### 🤖 Enhanced AI Experience
-- **Intelligent Fallbacks**: Smart responses when AI isn't configured
-- **Context Awareness**: Destination-specific recommendations
-- **Streaming Responses**: Real-time typing indicators and smooth conversations
-- **Memory Integration**: Persistent user preferences and travel history
-
-### 📱 Mobile Excellence
-- **Touch Optimizations**: 44px+ touch targets and haptic feedback
-- **Safe Area Support**: iPhone notch and gesture area compatibility
-- **Performance**: Reduced motion support and optimized animations
-- **Responsive**: Fluid layouts from 320px to 4K displays
+- **🤖 AI-Powered Planning**: NVIDIA GPT-OSS-120B integration for intelligent itinerary generation
+- **🎯 Multi-Step Planning**: Intuitive wizard interface for comprehensive travel planning
+- **🏢 Enterprise Security**: Built with security and scalability in mind
+- **📱 Responsive Design**: Modern SaaS interface optimized for all devices
+- **🔌 API-First**: RESTful API architecture for easy integration
+- **📊 Real-time Intelligence**: Dynamic travel recommendations and insights
 
 ## 🏗️ Architecture
 
-### Backend (FastAPI + Python 3.11)
-- **Advanced AI Agent** with memory and tool integration
-- **Streaming Chat API** with Server-Sent Events
-- **Intelligent Fallbacks** for offline/demo mode
-- **Real-time Data Pipeline** for travel intelligence
-- **Async Web Search** with comprehensive travel data
-
-### Frontend (Next.js 14 + TypeScript)
-- **Premium Design System** with custom CSS architecture
-- **Glassmorphism UI** with backdrop blur effects
-- **Smart Autocomplete** with real-time filtering
-- **Polaroid Memory System** with visual creation flow
-- **Mobile-First Design** with touch optimizations
-
-### Key Features
 ```
-🎯 AI Features
-├── Personal Travel Agent with Memory
-├── Real-time Streaming Responses  
-├── Tool Integration (Search, Budget, Attractions)
-├── Intelligent Fallback Responses
-└── Context-Aware Recommendations
-
-🎨 Premium UI/UX
-├── Sophisticated Glassmorphism Design
-├── Travel-Focused Branding & Icons
-├── Google-Style Search Experience
-├── Polaroid Memory System
-└── Mobile-First Responsive Design
-
-💎 Premium Tiers
-├── Free: 3 itineraries/month, basic chat
-├── Pro ($19/month): Unlimited AI, real-time alerts
-└── Enterprise ($99/user): Team features, API access
-
-🛠️ Advanced Tools
-├── Smart City Search & Autocomplete
-├── Visual Memory Creation System
-├── Real-time Price Monitoring
-├── Weather & Alert Integration
-└── Community Travel Intelligence
+NomadsAI/
+├── frontend/                 # Next.js 14 + Tailwind + shadcn/ui
+│   ├── app/                 # App Router pages
+│   ├── components/          # Reusable UI components
+│   └── lib/                 # Utilities and helpers
+├── backend/                 # FastAPI + Python 3.11+
+│   ├── app/                 # Main application
+│   ├── routers/             # API endpoints
+│   ├── services/            # Business logic and AI integration
+│   └── utils/               # Helper functions
+└── docs/                    # Project documentation
 ```
+
+### Tech Stack
+
+| Component | Technology | Version |
+|-----------|------------|---------|
+| **Frontend** | Next.js | 14.2.5+ |
+| **Styling** | Tailwind CSS + shadcn/ui | Latest |
+| **Backend** | FastAPI + Python | 3.11+ |
+| **AI Engine** | NVIDIA GPT-OSS-120B | Latest |
+| **Database** | SQLModel + SQLite | Latest |
+| **Deployment** | Vercel (Frontend) + Render (Backend) | - |
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.11+
-- Node.js 18+
-- Git
 
-### 1. Clone & Setup
-```bash
-git clone <repository-url>
-cd nomad-ai
-```
+- **Node.js** 18+ and **npm** 9+
+- **Python** 3.11+
+- **Git** for version control
 
-### 2. Backend Setup
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env
-```
+### Frontend Setup
 
-### 3. Frontend Setup
 ```bash
 cd frontend
 npm install
-cp .env.example .env.local
+npm run dev
 ```
 
-### 4. Configure Environment
+Frontend will be available at: `http://localhost:3000`
 
-**Backend (.env):**
-```env
-# AI Configuration (Optional - has intelligent fallbacks)
-GPT_OSS_BASE_URL=your_ai_provider_url
-GPT_OSS_API_KEY=your_api_key
-GPT_OSS_MODEL=gpt-4
+### Backend Setup
 
-# Database
-DATABASE_URL=sqlite:///./nomadai.db
-
-# CORS
-CORS_ORIGINS=http://localhost:3000,https://nomads-ai-o7lq.vercel.app
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
+
+Backend API will be available at: `http://localhost:8000`
+
+### Environment Variables
+
+Create `.env` files in both frontend and backend directories:
 
 **Frontend (.env.local):**
 ```env
 NEXT_PUBLIC_API_BASE=http://localhost:8000
 ```
 
-### 5. Launch
-```bash
-# Terminal 1: Backend
-cd backend && python uvicorn_main.py
-
-# Terminal 2: Frontend  
-cd frontend && npm run dev
+**Backend (.env):**
+```env
+NVIDIA_API_KEY=your_nvidia_api_key_here
+CORS_ORIGINS=http://localhost:3000
 ```
 
-Visit `http://localhost:3000` to experience the transformed NomadAI 2.0!
+## 📚 API Documentation
 
-## 🌟 Core Features
+### Core Endpoints
 
-### 🤖 AI Travel Companion
-- **Persistent Memory**: Remembers your travel preferences across sessions
-- **Learning Algorithm**: Adapts recommendations based on your behavior
-- **Tool Integration**: Accesses real-time data, search, and analysis tools
-- **Streaming Responses**: Real-time conversation with typing indicators
-- **Intelligent Fallbacks**: Works even without AI configuration
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `POST /api/plan` | POST | Generate AI travel plan |
+| `GET /api/ai-status` | GET | Check AI service status |
+| `POST /api/chat` | POST | AI chat interface |
+| `GET /api/healthz` | GET | Health check |
 
-### 🔍 Smart Search & Discovery
-- **Real-time Autocomplete**: Google-style search with instant suggestions
-- **Global City Database**: 25+ destinations including nomad hotspots
-- **Trending Insights**: Visual indicators for popular destinations
-- **Context-Aware Results**: Personalized based on travel history
+### Travel Planning API
 
-### 📸 Visual Memory System
-- **Polaroid Creation**: Beautiful vintage-style travel memories
-- **Rich Metadata**: Location, date, weather, mood, companions
-- **Visual Selection**: Choose from curated travel photography
-- **Interactive Design**: Hover effects and authentic styling
+**Generate Travel Plan:**
+```http
+POST /api/plan
+Content-Type: application/json
 
-### 💰 Smart Monetization
-- **Freemium Model**: Generous free tier with premium upgrades
-- **Value-Based Pricing**: $19/month Pro, $99/user Enterprise
-- **Feature Gating**: Intelligent limits that encourage upgrades
-- **ROI Tracking**: Users save 30% on average with premium features
+{
+  "from_city": "New York",
+  "destination": "Tokyo",
+  "departure_date": "2025-08-20",
+  "return_date": "2025-08-28",
+  "travelers": 1,
+  "budget": "premium",
+  "interests": ["culture", "food", "adventure"]
+}
+```
 
-## 🎯 Roadmap
+**Response:**
+```json
+{
+  "summary": "Your 9-day journey from New York to Tokyo",
+  "itinerary": [...],
+  "highlights": [...],
+  "estimated_budget": "Premium",
+  "cultural_insights": "...",
+  "local_recommendations": "...",
+  "travel_tips": "...",
+  "ai_provider": "NVIDIA GPT-OSS-120B"
+}
+```
 
-### ✅ Phase 1: Premium Foundation (Completed)
-- [x] Complete UI/UX transformation
-- [x] Smart search with autocomplete
-- [x] Polaroid memory system
-- [x] Mobile optimization
-- [x] AI fallback responses
+## 🔧 Development
 
-### 🔄 Phase 2: Intelligence Layer (Q1 2025)
-- [ ] Real travel API integrations
-- [ ] Voice interface integration
-- [ ] AR navigation features
-- [ ] Advanced budget optimization
+### Project Structure
 
-### 🌍 Phase 3: Global Scale (Q2 2025)
-- [ ] Mobile app with offline capabilities
-- [ ] International expansion (Europe, Asia)
-- [ ] Partnership integrations
-- [ ] Team collaboration features
+```
+frontend/
+├── app/                     # Next.js App Router
+│   ├── page.tsx            # Landing page with travel planner
+│   ├── results/            # Travel plan results page
+│   ├── chat/               # AI chat interface
+│   └── globals.css         # Global styles and design system
+├── components/              # Reusable components
+│   ├── ui/                 # shadcn/ui components
+│   └── ...                 # Custom components
+└── lib/                    # Utilities and helpers
 
-### 🚀 Phase 4: Market Domination (Q3 2025)
-- [ ] Enterprise API and white-label
-- [ ] AI travel insights marketplace
-- [ ] Acquisition opportunities
-- [ ] IPO preparation
+backend/
+├── app/
+│   ├── main.py             # FastAPI application setup
+│   ├── models.py           # Pydantic data models
+│   ├── routers/            # API route handlers
+│   │   ├── plan.py         # Travel planning endpoint
+│   │   ├── chat.py         # Chat functionality
+│   │   └── ...             # Other endpoints
+│   ├── services/           # Business logic
+│   │   ├── gpt_oss.py      # NVIDIA AI integration
+│   │   ├── llm_client.py   # LLM client management
+│   │   └── ...             # Other services
+│   └── utils/              # Helper functions
+```
 
-## 💡 Business Model
+### Key Components
 
-### 📈 Revenue Streams
-1. **Subscription Revenue** (70%): $19/month Pro, $99/user Enterprise
-2. **Commission Partnerships** (20%): Travel booking commissions
-3. **Premium Features** (5%): AR, voice, concierge services
-4. **Data Insights** (5%): Anonymized travel intelligence
+#### Frontend Components
 
-### 🎯 Target Market
-- **Primary**: Digital nomads and frequent travelers (18-45)
-- **Secondary**: Business travelers and travel agencies
-- **Enterprise**: Corporate travel management teams
+- **Travel Planner Wizard**: Multi-step form for travel preferences
+- **Results Page**: Beautiful display of AI-generated travel plans
+- **Design System**: Consistent UI using shadcn/ui and Tailwind CSS
+- **Responsive Layout**: Mobile-first design approach
 
-### 📊 Success Metrics
-- **User Metrics**: 1M MAU by end of 2025
-- **Business Metrics**: $50M ARR by end of 2025
-- **Product Metrics**: 95% AI accuracy, <100ms response time
+#### Backend Services
 
-## 🛠️ Technology Stack
+- **AI Integration**: NVIDIA GPT-OSS-120B for intelligent planning
+- **Data Validation**: Pydantic models for request/response validation
+- **Error Handling**: Comprehensive error handling and fallbacks
+- **API Security**: CORS configuration and input validation
 
-### Backend
-- **Framework**: FastAPI (Python 3.11)
-- **AI/ML**: OpenAI GPT-4, Custom recommendation models
-- **Database**: PostgreSQL + Redis for caching
-- **Search**: DuckDuckGo + custom travel APIs
-- **Deployment**: Render/Railway with auto-scaling
+### Development Commands
 
-### Frontend
-- **Framework**: Next.js 14 with TypeScript
-- **Styling**: Custom CSS with Glassmorphism design system
-- **Icons**: Lucide React with custom travel icons
-- **State**: React hooks + localStorage
-- **Deployment**: Vercel with global CDN
+```bash
+# Frontend
+npm run dev          # Development server
+npm run build        # Production build
+npm run lint         # Lint code
+npm run type-check   # TypeScript check
 
-### Infrastructure
-- **Monitoring**: Sentry error tracking
-- **Analytics**: Custom event tracking
-- **Security**: CORS, rate limiting, data encryption
-- **Scalability**: Microservices architecture
+# Backend
+uvicorn app.main:app --reload    # Development server
+python -m pytest                 # Run tests
+python -m black .                # Format code
+```
 
-## 🤝 Contributing
+## 🚀 Deployment
 
-We're building the future of travel! Here's how you can contribute:
+### Frontend (Vercel)
 
-### 🔧 Development
+1. Connect your GitHub repository to Vercel
+2. Set environment variables in Vercel dashboard
+3. Deploy automatically on push to main branch
+
+### Backend (Render)
+
+1. Connect your GitHub repository to Render
+2. Set environment variables in Render dashboard
+3. Deploy automatically on push to main branch
+
+### Environment Variables for Production
+
+**Frontend:**
+```env
+NEXT_PUBLIC_API_BASE=https://your-backend.onrender.com
+```
+
+**Backend:**
+```env
+NVIDIA_API_KEY=your_production_nvidia_api_key
+CORS_ORIGINS=https://your-frontend.vercel.app
+```
+
+## 🧪 Testing
+
+### Frontend Testing
+
+```bash
+cd frontend
+npm run test        # Run tests
+npm run test:watch  # Watch mode
+```
+
+### Backend Testing
+
+```bash
+cd backend
+python -m pytest tests/     # Run all tests
+python -m pytest -v         # Verbose output
+```
+
+## 📝 Contributing
+
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
 
-### 🐛 Bug Reports
-Use our [issue tracker](https://github.com/mythicavalon/nomad-ai/issues) with:
-- Clear description of the problem
-- Steps to reproduce
-- Expected vs actual behavior
-- Browser/environment details
+### Code Style
 
-### 💡 Feature Requests
-We love ideas! Submit feature requests with:
-- Problem you're trying to solve
-- Proposed solution
-- Use cases and benefits
+- **Frontend**: ESLint + Prettier configuration
+- **Backend**: Black + isort for Python formatting
+- **Commits**: Conventional commit messages
 
-## 📈 Growth Strategy
+## 📄 License
 
-### 🎯 Go-to-Market
-1. **Product Hunt Launch**: Demo video + live links
-2. **Content Marketing**: AI travel guides and case studies  
-3. **Creator Partnerships**: Travel influencer collaborations
-4. **Community Building**: Discord/Reddit engagement
-5. **Email Marketing**: Weekly AI travel insights
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-### 🌐 Distribution Channels
-- **Direct**: Website and mobile app
-- **Partnerships**: Travel agencies and corporate accounts
-- **Affiliates**: Travel blogger referral program
-- **API**: White-label solutions for travel companies
+## 🤝 Support
 
-## 📞 Support & Contact
+- **Documentation**: Check the [docs/](docs/) directory
+- **Issues**: Report bugs via GitHub Issues
+- **Discussions**: Join the conversation in GitHub Discussions
 
-### 🆘 Get Help
-- **Documentation**: [docs.nomadai.com](https://docs.nomadai.com)
-- **Community**: [Discord Server](https://discord.gg/nomadai)
-- **Email**: support@nomadai.com
-- **Enterprise**: enterprise@nomadai.com
+## 🔗 Links
 
-### 👨‍💻 Team
-- **Founder**: [@mythicavalon](https://github.com/mythicavalon)
-- **LinkedIn**: [Amal Nair](https://www.linkedin.com/in/amal080/)
-- **Sponsor**: [PayPal](https://www.paypal.com/paypalme/amalnair11/)
-
-### 📜 Legal
-- **License**: MIT (see [LICENSE](LICENSE))
-- **Privacy**: [Privacy Policy](https://nomads-ai-o7lq.vercel.app/privacy)
-- **Terms**: [Terms of Service](https://nomads-ai-o7lq.vercel.app/terms)
+- **Live Demo**: [Your deployed frontend URL]
+- **API Docs**: [Your deployed backend URL]/docs
+- **GitHub**: [Your repository URL]
 
 ---
 
-<div align="center">
+**Built with ❤️ by the NomadsAI Team**
 
-### 🚀 Ready to Transform Travel?
-
-[**Start Free Trial**](https://nomads-ai-o7lq.vercel.app/) • [**View Pricing**](https://nomads-ai-o7lq.vercel.app/pricing) • [**Schedule Demo**](https://calendly.com/nomadai)
-
-**Built with ❤️ for the future of travel**
-
-</div>
+*Empowering travelers with AI-driven intelligence*
