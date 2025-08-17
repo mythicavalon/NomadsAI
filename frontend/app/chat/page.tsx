@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send, User, Bot, Sparkles, Brain, Zap, MessageCircle, Loader, MapPin } from "lucide-react";
+import { Send, User, Bot, Sparkles, Brain, Zap, MessageCircle, Loader, MapPin, Plane } from "lucide-react";
+import { Button, Input, Card } from "../../components/ui";
+import { clsx } from "clsx";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
@@ -101,266 +103,294 @@ export default function ChatPage() {
 			}
 
 			const reader = response.body?.getReader();
-			if (!reader) {
-				throw new Error("Failed to get response reader");
-			}
+			if (!reader) throw new Error("No reader available");
 
-			let assistantResponse = "";
-			
+			let fullResponse = "";
+			const decoder = new TextDecoder();
+
 			while (true) {
 				const { done, value } = await reader.read();
 				if (done) break;
 
-				const chunk = new TextDecoder().decode(value);
+				const chunk = decoder.decode(value);
 				const lines = chunk.split('\n');
-				
+
 				for (const line of lines) {
 					if (line.startsWith('data: ')) {
+						const data = line.slice(6);
+						if (data === '[DONE]') {
+							setStreaming(false);
+							setLoading(false);
+							setMessages(prev => [...prev, { 
+								role: "assistant", 
+								content: fullResponse, 
+								timestamp: new Date().toISOString() 
+							}]);
+							setCurrentResponse("");
+							return;
+						}
+
 						try {
-							const data = JSON.parse(line.slice(6));
-							if (data.type === 'content' && data.content) {
-								assistantResponse += data.content;
-								setCurrentResponse(assistantResponse);
-							} else if (data.type === 'done') {
-								setStreaming(false);
-								setMessages([...newMessages, { 
-									role: "assistant", 
-									content: assistantResponse, 
-									timestamp: new Date().toISOString() 
-								}]);
-								setCurrentResponse("");
-								break;
-							} else if (data.type === 'error') {
-								throw new Error(data.error);
+							const parsed = JSON.parse(data);
+							if (parsed.choices && parsed.choices[0]?.delta?.content) {
+								const content = parsed.choices[0].delta.content;
+								fullResponse += content;
+								setCurrentResponse(fullResponse);
 							}
 						} catch (e) {
-							// Skip invalid JSON lines
+							console.log("Failed to parse chunk:", data);
 						}
 					}
 				}
 			}
 		} catch (error) {
-			console.error('Chat error:', error);
-			setMessages([...newMessages, { 
+			console.error('Error:', error);
+			setMessages(prev => [...prev, { 
 				role: "assistant", 
-				content: "I apologize, but I encountered an error while processing your request. Please try again or check your connection.", 
+				content: "Sorry, I encountered an error. Please try again.", 
 				timestamp: new Date().toISOString() 
 			}]);
 		} finally {
-			setLoading(false);
 			setStreaming(false);
+			setLoading(false);
 			setCurrentResponse("");
 		}
 	}
 
-	function formatTimestamp(timestamp?: string) {
-		if (!timestamp) return "";
-		return new Date(timestamp).toLocaleTimeString('en-US', { 
-			hour: '2-digit', 
-			minute: '2-digit' 
-		});
-	}
+	const handleKeyPress = (e: React.KeyboardEvent) => {
+		if (e.key === 'Enter' && !e.shiftKey) {
+			e.preventDefault();
+			sendMessage();
+		}
+	};
 
 	return (
-		<div className="h-[calc(100vh-200px)] flex flex-col">
-			{/* Chat Header */}
-			<div className="glass-strong rounded-2xl p-6 mb-6">
-				<div className="flex items-center justify-between">
-					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center animate-glow">
-							<Bot className="w-7 h-7 text-white" />
-						</div>
-						<div>
-							<h1 className="heading-md">AI Travel Chat</h1>
-							<p className="text-white/70">Your intelligent travel companion</p>
-						</div>
+		<div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+			{/* Header */}
+			<div className="text-center space-y-4">
+				<div className="flex items-center justify-center gap-3 mb-4">
+					<div className="w-12 h-12 bg-accent-500/20 rounded-full flex items-center justify-center">
+						<Sparkles className="w-6 h-6 text-accent-400" />
 					</div>
-					
-					{userMemory && (
-						<button
-							onClick={() => setShowMemory(!showMemory)}
-							className="btn-secondary flex items-center gap-2"
-						>
-							<Brain className="w-4 h-4" />
-							Memory
-						</button>
-					)}
+					<h1 className="heading-2xl">AI Travel Concierge</h1>
 				</div>
-
-				{/* Destination Context */}
-				{destination && (
-					<div className="mt-4 p-3 glass rounded-xl flex items-center gap-2">
-						<MapPin className="w-4 h-4 text-brand-400" />
-						<span className="text-white/80">Context: {destination}</span>
-						<button 
-							onClick={() => setDestination("")}
-							className="ml-auto text-white/60 hover:text-white"
-						>
-							×
-						</button>
-					</div>
-				)}
+				<p className="text-gray-300 max-w-2xl mx-auto">
+					Your intelligent travel companion that learns your preferences and creates personalized recommendations
+				</p>
 			</div>
 
-			{/* Memory Panel */}
-			{showMemory && userMemory && (
-				<div className="glass rounded-2xl p-4 mb-4">
-					<h3 className="font-semibold text-white mb-2 flex items-center gap-2">
-						<Brain className="w-4 h-4 text-brand-400" />
-						AI Memory
-					</h3>
-					<div className="text-sm text-white/70 space-y-1">
-						<p><strong>Interactions:</strong> {userMemory.interaction_count || 0}</p>
-						{userMemory.preferences && Object.keys(userMemory.preferences).length > 0 && (
-							<p><strong>Preferences:</strong> {JSON.stringify(userMemory.preferences)}</p>
-						)}
-					</div>
+			{/* Chat Interface */}
+			<Card className="space-y-6">
+				{/* Destination Input */}
+				<div className="space-y-4">
+					<label className="flex items-center gap-2 text-gray-300 font-medium">
+						<MapPin className="w-4 h-4 text-accent-400" />
+						Current Destination (Optional)
+					</label>
+					<Input
+						placeholder="e.g., Tokyo, Barcelona, Bali..."
+						value={destination}
+						onChange={(e) => setDestination(e.target.value)}
+						leftIcon={<Plane className="w-4 h-4" />}
+					/>
 				</div>
-			)}
 
-			{/* Messages Container */}
-			<div 
-				ref={listRef}
-				className="flex-1 overflow-y-auto space-y-4 mb-6 pr-2"
-				style={{ scrollBehavior: 'smooth' }}
-			>
-				{messages.map((msg, idx) => (
-					<div
-						key={idx}
-						className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-					>
-						{msg.role === 'assistant' && (
-							<div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center flex-shrink-0 mt-1">
-								<Bot className="w-4 h-4 text-white" />
-							</div>
-						)}
-						
-						<div className={`max-w-[80%] ${msg.role === 'user' ? 'order-1' : ''}`}>
-							<div
-								className={`p-4 rounded-2xl ${
-									msg.role === 'user'
-										? 'bg-gradient-to-r from-brand-500 to-brand-600 text-white ml-auto'
-										: 'glass text-white'
-								}`}
-							>
-								<div className="whitespace-pre-wrap leading-relaxed">
-									{msg.content}
-								</div>
-							</div>
-							{msg.timestamp && (
-								<div className={`text-xs text-white/50 mt-1 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-									{formatTimestamp(msg.timestamp)}
-								</div>
-							)}
-						</div>
-
-						{msg.role === 'user' && (
-							<div className="w-8 h-8 rounded-xl bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center flex-shrink-0 mt-1 order-2">
-								<User className="w-4 h-4 text-white" />
-							</div>
-						)}
-					</div>
-				))}
-
-				{/* Streaming Response */}
-				{streaming && currentResponse && (
-					<div className="flex gap-4 justify-start">
-						<div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center flex-shrink-0 mt-1">
-							<Bot className="w-4 h-4 text-white" />
-						</div>
-						<div className="max-w-[80%]">
-							<div className="p-4 rounded-2xl glass text-white">
-								<div className="whitespace-pre-wrap leading-relaxed">
-									{currentResponse}
-									<span className="inline-block w-2 h-5 bg-brand-400 ml-1 animate-pulse"></span>
-								</div>
-							</div>
-						</div>
-					</div>
-				)}
-
-				{/* Loading Indicator */}
-				{loading && !streaming && (
-					<div className="flex gap-4 justify-start">
-						<div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center flex-shrink-0 mt-1">
-							<Loader className="w-4 h-4 text-white animate-spin" />
-						</div>
-						<div className="glass rounded-2xl p-4">
-							<div className="flex items-center gap-2 text-white/70">
-								<div className="flex gap-1">
-									<div className="w-2 h-2 bg-brand-400 rounded-full animate-bounce"></div>
-									<div className="w-2 h-2 bg-brand-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-									<div className="w-2 h-2 bg-brand-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-								</div>
-								<span>Thinking...</span>
-							</div>
-						</div>
-					</div>
-				)}
-			</div>
-
-			{/* Suggestions */}
-			{messages.length <= 1 && (
-				<div className="mb-6">
-					<h3 className="text-white/80 font-medium mb-3 flex items-center gap-2">
-						<Sparkles className="w-4 h-4 text-brand-400" />
-						Try asking about:
-					</h3>
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+				{/* Quick Suggestions */}
+				<div className="space-y-3">
+					<label className="text-sm font-medium text-gray-400">Quick Start Suggestions</label>
+					<div className="flex flex-wrap gap-2">
 						{SUGGESTIONS.map((suggestion, idx) => (
-							<button
+							<Button
 								key={idx}
+								variant="ghost"
+								size="sm"
 								onClick={() => sendMessage(suggestion)}
 								disabled={loading}
-								className="text-left p-3 glass rounded-xl hover:glass-strong transition-all duration-300 text-white/80 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]"
+								className="text-xs"
 							>
 								{suggestion}
-							</button>
+							</Button>
 						))}
 					</div>
 				</div>
-			)}
 
-			{/* Input Area */}
-			<div className="glass-strong rounded-2xl p-4">
-				<div className="flex gap-4">
-					<input
-						type="text"
-						value={input}
-						onChange={(e) => setInput(e.target.value)}
-						onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-						placeholder="Ask me anything about travel... (Press Enter to send)"
-						disabled={loading}
-						className="flex-1 input-premium disabled:opacity-50 disabled:cursor-not-allowed"
-					/>
-					<button
-						onClick={() => sendMessage()}
-						disabled={loading || !input.trim()}
-						className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-					>
-						<Send className="w-4 h-4" />
-						Send
-					</button>
-				</div>
-				
-				<div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
-					<div className="flex items-center gap-4">
-						<label className="flex items-center gap-2 text-sm text-white/70">
-							<MapPin className="w-4 h-4" />
-							<input
-								type="text"
-								value={destination}
-								onChange={(e) => setDestination(e.target.value)}
-								placeholder="Add destination context (optional)"
-								className="bg-transparent border-none outline-none placeholder-white/50 text-white/80"
-							/>
-						</label>
+				{/* Memory Display */}
+				{userMemory && (
+					<div className="space-y-3">
+						<div className="flex items-center justify-between">
+							<label className="text-sm font-medium text-gray-400">Your Travel Profile</label>
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={() => setShowMemory(!showMemory)}
+								className="text-xs"
+							>
+								{showMemory ? 'Hide' : 'Show'} Details
+							</Button>
+						</div>
+						{showMemory && (
+							<div className="p-4 glass rounded-lg border border-gray-700/50 animate-fade-in">
+								<div className="grid md:grid-cols-2 gap-4 text-sm">
+									<div>
+										<span className="text-gray-400">Preferred Destinations:</span>
+										<div className="text-white mt-1">
+											{userMemory.preferred_destinations?.join(', ') || 'None specified'}
+										</div>
+									</div>
+									<div>
+										<span className="text-gray-400">Travel Style:</span>
+										<div className="text-white mt-1">
+											{userMemory.travel_style || 'Not specified'}
+										</div>
+									</div>
+									<div>
+										<span className="text-gray-400">Budget Range:</span>
+										<div className="text-white mt-1">
+											{userMemory.budget_range || 'Not specified'}
+										</div>
+									</div>
+									<div>
+										<span className="text-gray-400">Interests:</span>
+										<div className="text-white mt-1">
+											{userMemory.interests?.join(', ') || 'None specified'}
+										</div>
+									</div>
+								</div>
+							</div>
+						)}
+					</div>
+				)}
+			</Card>
+
+			{/* Messages */}
+			<Card className="space-y-6">
+				<div className="space-y-4">
+					<div className="flex items-center gap-2 text-gray-400 text-sm">
+						<MessageCircle className="w-4 h-4" />
+						Conversation History
 					</div>
 					
-					<div className="text-xs text-white/50">
-						Powered by AI • {messages.length - 1} messages
+					<div 
+						ref={listRef}
+						className="space-y-4 max-h-96 overflow-y-auto pr-2"
+					>
+						{messages.map((message, idx) => (
+							<div
+								key={idx}
+								className={clsx(
+									"flex gap-3",
+									message.role === "user" ? "justify-end" : "justify-start"
+								)}
+							>
+								{message.role === "assistant" && (
+									<div className="w-8 h-8 bg-accent-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+										<Bot className="w-4 h-4 text-accent-400" />
+									</div>
+								)}
+								
+								<div
+									className={clsx(
+										"max-w-[80%] rounded-2xl px-4 py-3",
+										message.role === "user"
+											? "bg-accent-500 text-gray-900"
+											: "glass border border-gray-700/50"
+									)}
+								>
+									<div className="whitespace-pre-wrap">{message.content}</div>
+									{message.timestamp && (
+										<div className={clsx(
+											"text-xs mt-2",
+											message.role === "user" ? "text-gray-700" : "text-gray-400"
+										)}>
+											{new Date(message.timestamp).toLocaleTimeString()}
+										</div>
+									)}
+								</div>
+
+								{message.role === "user" && (
+									<div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0">
+										<User className="w-4 h-4 text-gray-300" />
+									</div>
+								)}
+							</div>
+						))}
+
+						{/* Streaming Response */}
+						{streaming && currentResponse && (
+							<div className="flex gap-3 justify-start">
+								<div className="w-8 h-8 bg-accent-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+									<Bot className="w-4 h-4 text-accent-400" />
+								</div>
+								<div className="max-w-[80%] glass border border-gray-700/50 rounded-2xl px-4 py-3">
+									<div className="whitespace-pre-wrap">{currentResponse}</div>
+									<div className="flex items-center gap-2 mt-2">
+										<Loader className="w-3 h-3 animate-spin text-accent-400" />
+										<span className="text-xs text-gray-400">AI is thinking...</span>
+									</div>
+								</div>
+							</div>
+						)}
 					</div>
 				</div>
+
+				{/* Input Area */}
+				<div className="space-y-4">
+					<div className="flex gap-3">
+						<Input
+							placeholder="Ask me anything about travel..."
+							value={input}
+							onChange={(e) => setInput(e.target.value)}
+							onKeyPress={handleKeyPress}
+							disabled={loading}
+							className="flex-1"
+						/>
+						<Button
+							onClick={() => sendMessage()}
+							disabled={loading || !input.trim()}
+							loading={loading}
+							leftIcon={<Send className="w-4 h-4" />}
+						>
+							Send
+						</Button>
+					</div>
+					
+					<div className="text-xs text-gray-400 text-center">
+						Press Enter to send, Shift+Enter for new line
+					</div>
+				</div>
+			</Card>
+
+			{/* Features */}
+			<div className="grid md:grid-cols-3 gap-6">
+				<Card className="text-center space-y-4">
+					<div className="w-12 h-12 bg-accent-500/20 rounded-full flex items-center justify-center mx-auto">
+						<Brain className="w-6 h-6 text-accent-400" />
+					</div>
+					<h3 className="heading-sm">AI Learning</h3>
+					<p className="text-sm text-gray-300">
+						I remember your preferences and get smarter with every conversation
+					</p>
+				</Card>
+
+				<Card className="text-center space-y-4">
+					<div className="w-12 h-12 bg-accent-500/20 rounded-full flex items-center justify-center mx-auto">
+						<Zap className="w-6 h-6 text-accent-400" />
+					</div>
+					<h3 className="heading-sm">Real-time Updates</h3>
+					<p className="text-sm text-gray-300">
+						Get live information about destinations, events, and travel conditions
+					</p>
+				</Card>
+
+				<Card className="text-center space-y-4">
+					<div className="w-12 h-12 bg-accent-500/20 rounded-full flex items-center justify-center mx-auto">
+						<Sparkles className="w-6 h-6 text-accent-400" />
+					</div>
+					<h3 className="heading-sm">Personalized</h3>
+					<p className="text-sm text-gray-300">
+						Every recommendation is tailored to your unique travel style and interests
+					</p>
+				</Card>
 			</div>
 		</div>
 	);
