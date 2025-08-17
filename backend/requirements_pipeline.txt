@@ -1,0 +1,17 @@
+# Pipeline-specific requirements for the two-stage itinerary generation system
+
+# Core dependencies
+jsonschema>=4.0.0
+sentence-transformers>=2.2.0
+numpy>=1.21.0
+
+# Database and caching
+sqlite3  # Usually included with Python
+
+# Optional: For production use
+# chromadb>=0.4.0  # Alternative vector database
+# weaviate-client>=3.25.0  # Alternative vector database
+
+# Development and testing
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
