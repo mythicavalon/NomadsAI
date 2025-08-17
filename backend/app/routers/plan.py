@@ -49,6 +49,8 @@ async def plan_travel(request: TravelPlanRequest):
         # Debug logging
         print(f"DEBUG: itinerary_data type: {type(itinerary_data)}")
         print(f"DEBUG: itinerary_data content: {itinerary_data}")
+        print(f"DEBUG: Checking for 'itinerary' key: {'itinerary' in itinerary_data if isinstance(itinerary_data, dict) else 'Not a dict'}")
+        print(f"DEBUG: Available keys: {list(itinerary_data.keys()) if isinstance(itinerary_data, dict) else 'Not a dict'}")
         
         # Extract the structured data from the AI response
         try:
@@ -70,13 +72,17 @@ async def plan_travel(request: TravelPlanRequest):
                 travel_tips = itinerary_data.get("travel_tips", f"Plan your trip from {request.from_city} to {request.destination} with local insights.")
                 ai_provider = itinerary_data.get("ai_provider", "NVIDIA GPT-OSS-120B")
             else:
-                # Fallback to basic structure - match the frontend interface
+                # Fallback to basic structure - match the frontend interface with destination-specific activities
                 summary = f"Your {days}-day journey from {request.from_city} to {request.destination}"
-                itinerary = [{"day": i+1, "summary": f"Day {i+1} in {request.destination}", "activities": [
-                    {"time": "09:00", "title": "Morning Exploration", "description": "Begin your day discovering local culture", "category": "culture"},
-                    {"time": "14:00", "title": "Afternoon Discovery", "description": "Explore local attractions and hidden gems", "category": "exploration"},
-                    {"time": "19:00", "title": "Evening Experience", "description": "Enjoy local evening culture and entertainment", "category": "evening"}
-                ]} for i in range(days)]
+                
+                # Generate destination-specific activities based on common patterns
+                destination_activities = [
+                    f"09:00: Explore {request.destination} city center and main attractions",
+                    f"14:00: Visit local landmarks and cultural sites in {request.destination}",
+                    f"19:00: Experience {request.destination} nightlife and local cuisine"
+                ]
+                
+                itinerary = [{"day": i+1, "summary": f"Day {i+1} in {request.destination}", "activities": destination_activities} for i in range(days)]
                 highlights = [f"Explore {request.destination}", f"Experience local culture", f"Discover hidden gems"]
                 estimated_budget = request.budget
                 cultural_insights = "Immerse yourself in local culture and traditions."
@@ -85,13 +91,17 @@ async def plan_travel(request: TravelPlanRequest):
                 ai_provider = "Knowledge-based fallback"
         except Exception as e:
             print(f"DEBUG: Error processing itinerary_data: {e}")
-            # Fallback to basic structure on any error - match the frontend interface
+            # Fallback to basic structure on any error - match the frontend interface with destination-specific activities
             summary = f"Your {days}-day journey from {request.from_city} to {request.destination}"
-            itinerary = [{"day": i+1, "summary": f"Day {i+1} in {request.destination}", "activities": [
-                {"time": "09:00", "title": "Morning Exploration", "description": "Begin your day discovering local culture", "category": "culture"},
-                {"time": "14:00", "title": "Afternoon Discovery", "description": "Explore local attractions and hidden gems", "category": "exploration"},
-                {"time": "19:00", "title": "Evening Experience", "description": "Enjoy local evening culture and entertainment", "category": "evening"}
-            ]} for i in range(days)]
+            
+            # Generate destination-specific activities based on common patterns
+            destination_activities = [
+                f"09:00: Explore {request.destination} city center and main attractions",
+                f"14:00: Visit local landmarks and cultural sites in {request.destination}",
+                f"19:00: Experience {request.destination} nightlife and local cuisine"
+            ]
+            
+            itinerary = [{"day": i+1, "summary": f"Day {i+1} in {request.destination}", "activities": destination_activities} for i in range(days)]
             highlights = [f"Explore {request.destination}", f"Experience local culture", f"Discover hidden gems"]
             estimated_budget = request.budget
             cultural_insights = "Immerse yourself in local culture and traditions."

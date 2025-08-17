@@ -232,14 +232,25 @@ function ResultsPageContent() {
                               let category = '';
                               
                               if (typeof activity === 'string') {
-                                // Parse string format: "09:00: Activity Name"
-                                const colonIndex = activity.indexOf(':');
-                                if (colonIndex !== -1) {
-                                  time = activity.substring(0, colonIndex).trim();
-                                  title = activity.substring(colonIndex + 1).trim();
-                                  description = `Experience ${title.toLowerCase()} in ${travelPlan.destination}`;
-                                  category = 'exploration';
+                                // Parse string format: "09:00: Activity Name" - find the SECOND colon
+                                const firstColonIndex = activity.indexOf(':');
+                                if (firstColonIndex !== -1) {
+                                  const secondColonIndex = activity.indexOf(':', firstColonIndex + 1);
+                                  if (secondColonIndex !== -1) {
+                                    // Found both colons: "09:00: Activity Name"
+                                    time = activity.substring(0, secondColonIndex).trim();
+                                    title = activity.substring(secondColonIndex + 1).trim();
+                                    description = `Experience ${title.toLowerCase()} in ${travelPlan.destination}`;
+                                    category = 'exploration';
+                                  } else {
+                                    // Only one colon: treat as "Activity Name" with default time
+                                    time = '09:00';
+                                    title = activity.substring(firstColonIndex + 1).trim();
+                                    description = `Experience ${title.toLowerCase()} in ${travelPlan.destination}`;
+                                    category = 'exploration';
+                                  }
                                 } else {
+                                  // No colons: treat as activity name with default time
                                   title = activity;
                                   time = '09:00';
                                   description = `Enjoy ${activity.toLowerCase()} in ${travelPlan.destination}`;
