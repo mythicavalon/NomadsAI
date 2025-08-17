@@ -1,285 +1,358 @@
 """
 Stage 2: Knowledge Grounding / Data Retriever
-Enriches skeleton itineraries with factual, destination-specific data.
+Enriches skeleton itineraries with factual, destination-specific data from multiple sources.
 """
 
+import sqlite3
 import json
 import logging
-import hashlib
 from typing import Dict, List, Optional, Tuple
-from datetime import datetime, timedelta
-import sqlite3
 from pathlib import Path
-import numpy as np
-from sentence_transformers import SentenceTransformer
+import hashlib
+import time
+from ..services.wiki import fetch_top_attractions
 from ..utils.knowledge import load_city_knowledge
-from ..utils.mock_loader import load_events_for_city
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class DataRetriever:
-    """Retrieves and enriches itinerary data with factual information."""
+    """Retrieves and caches destination-specific data for itinerary enrichment."""
     
-    def __init__(self, db_path: str = "data/embeddings.db"):
-        """Initialize the data retriever with embeddings database."""
+    def __init__(self, db_path: str = "data/knowledge_retriever.db"):
+        """Initialize the data retriever with SQLite database."""
         self.db_path = db_path
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')  # Lightweight embedding model
-        self.cache = {}
-        self.cache_ttl = timedelta(hours=24)
-        self.cache_timestamps = {}
-        
-        # Initialize database
         self._init_database()
-        
-        # Load and index knowledge data
-        self._load_knowledge_data()
+        self._cache = {}  # In-memory cache for frequent queries
     
     def _init_database(self):
-        """Initialize the SQLite database for embeddings."""
+        """Initialize SQLite database for knowledge storage and caching."""
         Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
         
         with sqlite3.connect(self.db_path) as conn:
+            # Knowledge storage table
             conn.execute("""
-                CREATE TABLE IF NOT EXISTS embeddings (
+                CREATE TABLE IF NOT EXISTS knowledge (
                     id INTEGER PRIMARY KEY,
                     destination TEXT NOT NULL,
                     topic TEXT NOT NULL,
-                    content TEXT NOT NULL,
-                    embedding BLOB NOT NULL,
                     source TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    relevance_score REAL DEFAULT 1.0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             
+            # Query cache table for performance
             conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_destination_topic 
-                ON embeddings(destination, topic)
+                CREATE TABLE IF NOT EXISTS query_cache (
+                    query_hash TEXT PRIMARY KEY,
+                    destination TEXT NOT NULL,
+                    topic TEXT NOT NULL,
+                    results TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    expires_at TIMESTAMP NOT NULL
+                )
             """)
             
+            # Create indexes for performance
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_destination_topic ON knowledge(destination, topic)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_query_hash ON query_cache(query_hash)")
             conn.commit()
     
-    def _load_knowledge_data(self):
-        """Load and index knowledge data from various sources."""
-        logger.info("Loading and indexing knowledge data...")
-        
-        # Load city knowledge data
-        cities = ["london", "paris", "tokyo", "new york", "rome", "barcelona", "amsterdam", "berlin", "prague", "vienna"]
-        
-        for city in cities:
-            try:
-                # Load city knowledge
-                knowledge = load_city_knowledge(city)
-                if knowledge:
-                    self._index_knowledge(city, "cultural_insight", knowledge.get("culture", ""))
-                    self._index_knowledge(city, "local_secrets", knowledge.get("hidden_gems", ""))
-                    self._index_knowledge(city, "travel_tips", knowledge.get("practical_info", ""))
-                
-                # Load city events
-                events = load_events_for_city(city)
-                if events:
-                    for event in events[:10]:  # Limit to top 10 events
-                        if isinstance(event, dict) and "name" in event:
-                            self._index_knowledge(city, "activities", event["name"])
-                            if "description" in event:
-                                self._index_knowledge(city, "highlights", event["description"])
-                
-            except Exception as e:
-                logger.warning(f"Failed to load data for {city}: {e}")
-        
-        logger.info("Knowledge data indexing completed")
+    def ingest_destination_data(self, destination: str) -> bool:
+        """Ingest data for a destination from multiple sources."""
+        try:
+            logger.info(f"Ingesting data for {destination}")
+            
+            # Source 1: Wikivoyage/Wikipedia attractions
+            attractions = self._fetch_wiki_attractions(destination)
+            for attraction in attractions:
+                self._store_knowledge(destination, "attractions", "wikivoyage", 
+                                    f"{attraction['title']}: {attraction['extract']}")
+            
+            # Source 2: Curated city knowledge
+            city_knowledge = load_city_knowledge(destination)
+            if city_knowledge:
+                for topic, content in city_knowledge.items():
+                    if isinstance(content, list):
+                        for item in content:
+                            self._store_knowledge(destination, topic, "curated", str(item))
+                    else:
+                        self._store_knowledge(destination, topic, "curated", str(content))
+            
+            # Source 3: Cultural and practical information
+            self._ingest_cultural_data(destination)
+            
+            logger.info(f"Successfully ingested data for {destination}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to ingest data for {destination}: {e}")
+            return False
     
-    def _index_knowledge(self, destination: str, topic: str, content: str):
-        """Index knowledge content in the embeddings database."""
+    def _fetch_wiki_attractions(self, destination: str) -> List[Dict]:
+        """Fetch attractions from Wikipedia/Wikivoyage."""
+        try:
+            return fetch_top_attractions(destination, max_items=15)
+        except Exception as e:
+            logger.warning(f"Failed to fetch wiki attractions for {destination}: {e}")
+            return []
+    
+    def _ingest_cultural_data(self, destination: str):
+        """Ingest cultural and practical data for destination."""
+        # This would be expanded to include more data sources
+        cultural_templates = {
+            "cultural_insight": f"Rich cultural heritage and traditions of {destination}",
+            "local_secrets": f"Hidden gems and authentic experiences in {destination}",
+            "travel_tips": f"Practical advice for traveling in {destination}"
+        }
+        
+        for topic, content in cultural_templates.items():
+            self._store_knowledge(destination, topic, "template", content)
+    
+    def _store_knowledge(self, destination: str, topic: str, source: str, content: str):
+        """Store knowledge in the database."""
         if not content or len(content.strip()) < 10:
             return
-        
-        try:
-            # Generate embedding
-            embedding = self.model.encode(content)
             
-            # Store in database
+        try:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute("""
-                    INSERT OR REPLACE INTO embeddings 
-                    (destination, topic, content, embedding, source) 
-                    VALUES (?, ?, ?, ?, ?)
-                """, (destination.lower(), topic, content, embedding.tobytes(), "knowledge_base"))
+                    INSERT OR REPLACE INTO knowledge 
+                    (destination, topic, source, content) 
+                    VALUES (?, ?, ?, ?)
+                """, (destination.lower(), topic, source, content))
                 conn.commit()
-                
         except Exception as e:
-            logger.warning(f"Failed to index knowledge for {destination}/{topic}: {e}")
+            logger.warning(f"Failed to store knowledge: {e}")
     
-    def query_retriever(self, destination: str, topic: str, limit: int = 3) -> List[Dict]:
+    def query_retriever(self, destination: str, topic: str, max_results: int = 3) -> List[str]:
         """
-        Query the retriever for relevant content.
+        Query retriever for destination-specific content.
         
         Args:
-            destination: Target destination city
-            topic: Topic to search for (activities, highlights, cultural_insight, etc.)
-            limit: Maximum number of results to return
+            destination: Target destination
+            topic: Topic to query (activities, highlights, cultural_insight, etc.)
+            max_results: Maximum number of results to return
             
         Returns:
-            List of relevant content dictionaries
+            List of relevant content strings
         """
-        cache_key = f"{destination.lower()}_{topic}_{limit}"
-        
         # Check cache first
-        if cache_key in self.cache:
-            timestamp = self.cache_timestamps.get(cache_key)
-            if timestamp and datetime.now() - timestamp < self.cache_ttl:
-                logger.info(f"Returning cached results for {cache_key}")
-                return self.cache[cache_key]
+        cache_key = f"{destination.lower()}:{topic}:{max_results}"
+        if cache_key in self._cache:
+            cache_time, results = self._cache[cache_key]
+            if time.time() - cache_time < 3600:  # 1 hour cache
+                return results
         
+        # Check database cache
+        query_hash = hashlib.md5(cache_key.encode()).hexdigest()
+        cached_results = self._get_cached_query(query_hash)
+        if cached_results:
+            self._cache[cache_key] = (time.time(), cached_results)
+            return cached_results
+        
+        # Perform actual query
+        results = self._perform_query(destination, topic, max_results)
+        
+        # Cache results
+        self._cache[cache_key] = (time.time(), results)
+        self._cache_query(query_hash, destination, topic, results)
+        
+        return results
+    
+    def _perform_query(self, destination: str, topic: str, max_results: int) -> List[str]:
+        """Perform actual database query for knowledge."""
         try:
-            # Query database for relevant content
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.execute("""
-                    SELECT content, source, destination 
-                    FROM embeddings 
+                    SELECT content, relevance_score FROM knowledge 
                     WHERE destination = ? AND topic = ?
-                    ORDER BY created_at DESC
+                    ORDER BY relevance_score DESC, created_at DESC
                     LIMIT ?
-                """, (destination.lower(), topic, limit))
+                """, (destination.lower(), topic, max_results))
                 
-                results = []
-                for row in cursor.fetchall():
-                    results.append({
-                        "content": row[0],
-                        "source": row[1],
-                        "destination": row[2]
-                    })
+                results = [row[0] for row in cursor.fetchall()]
                 
-                # Cache results
-                self.cache[cache_key] = results
-                self.cache_timestamps[cache_key] = datetime.now()
+                # If no specific results, try broader search
+                if not results:
+                    cursor = conn.execute("""
+                        SELECT content FROM knowledge 
+                        WHERE destination = ?
+                        ORDER BY relevance_score DESC, created_at DESC
+                        LIMIT ?
+                    """, (destination.lower(), max_results))
+                    results = [row[0] for row in cursor.fetchall()]
                 
-                logger.info(f"Retrieved {len(results)} results for {destination}/{topic}")
                 return results
                 
         except Exception as e:
-            logger.error(f"Query retriever failed: {e}")
+            logger.warning(f"Query failed for {destination}/{topic}: {e}")
             return []
     
-    def enrich_skeleton(self, skeleton: Dict) -> Dict:
-        """
-        Enrich a skeleton itinerary with factual data.
+    def _get_cached_query(self, query_hash: str) -> Optional[List[str]]:
+        """Get cached query results if not expired."""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.execute("""
+                    SELECT results FROM query_cache 
+                    WHERE query_hash = ? AND expires_at > datetime('now')
+                """, (query_hash,))
+                
+                row = cursor.fetchone()
+                if row:
+                    return json.loads(row[0])
+                    
+        except Exception as e:
+            logger.warning(f"Failed to get cached query: {e}")
         
-        Args:
-            skeleton: The skeleton itinerary from Stage 1
-            
-        Returns:
-            Enriched itinerary with factual data
-        """
-        logger.info("Enriching skeleton with factual data...")
+        return None
+    
+    def _cache_query(self, query_hash: str, destination: str, topic: str, results: List[str]):
+        """Cache query results with expiration."""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                expires_at = time.time() + 24 * 3600  # 24 hours
+                conn.execute("""
+                    INSERT OR REPLACE INTO query_cache 
+                    (query_hash, destination, topic, results, expires_at) 
+                    VALUES (?, ?, ?, ?, datetime(?, 'unixepoch'))
+                """, (query_hash, destination, topic, json.dumps(results), expires_at))
+                conn.commit()
+        except Exception as e:
+            logger.warning(f"Failed to cache query: {e}")
+
+def enrich_skeleton(skeleton: Dict, retriever: DataRetriever = None) -> Dict:
+    """
+    Stage 2: Enrich skeleton with factual knowledge from multiple sources.
+    
+    Args:
+        skeleton: JSON skeleton from Stage 1
+        retriever: DataRetriever instance (creates new if None)
         
-        enriched = skeleton.copy()
-        destination = skeleton.get("summary", "").split(" to ")[-1].split()[0].lower()
-        
-        # Enrich each day
-        for day_data in enriched.get("itinerary", []):
-            day_num = day_data.get("day", 1)
-            logger.info(f"Enriching day {day_num}")
-            
-            # Enrich activities
-            activities = day_data.get("activities", [])
-            enriched_activities = []
-            for activity in activities:
-                if activity == "TBD" or len(activity.strip()) < 10:
-                    # Try to find relevant activity data
-                    relevant_data = self.query_retriever(destination, "activities", 1)
-                    if relevant_data:
-                        enriched_activities.append(relevant_data[0]["content"])
-                    else:
-                        enriched_activities.append(f"Explore {destination} attractions")
-                else:
-                    enriched_activities.append(activity)
-            
-            day_data["activities"] = enriched_activities
-            
-            # Enrich highlights
-            highlights = day_data.get("highlights", [])
-            enriched_highlights = []
-            for highlight in highlights:
-                if highlight == "TBD" or len(highlight.strip()) < 10:
-                    relevant_data = self.query_retriever(destination, "highlights", 1)
-                    if relevant_data:
-                        enriched_highlights.append(relevant_data[0]["content"])
-                    else:
-                        enriched_highlights.append(f"Discover {destination} hidden gems")
-                else:
-                    enriched_highlights.append(highlight)
-            
-            day_data["highlights"] = enriched_highlights
-            
-            # Enrich cultural insight
-            cultural_insight = day_data.get("cultural_insight", "")
-            if cultural_insight == "TBD" or len(cultural_insight.strip()) < 20:
-                relevant_data = self.query_retriever(destination, "cultural_insight", 1)
-                if relevant_data:
-                    day_data["cultural_insight"] = relevant_data[0]["content"]
-                else:
-                    day_data["cultural_insight"] = f"Immerse yourself in {destination}'s rich cultural heritage and local customs."
-            
-            # Enrich local secrets
-            local_secrets = day_data.get("local_secrets", "")
-            if local_secrets == "TBD" or len(local_secrets.strip()) < 20:
-                relevant_data = self.query_retriever(destination, "local_secrets", 1)
-                if relevant_data:
-                    day_data["local_secrets"] = relevant_data[0]["content"]
-                else:
-                    day_data["local_secrets"] = f"Explore authentic experiences beyond typical tourist spots in {destination}."
-            
-            # Enrich travel tips
-            travel_tips = day_data.get("travel_tips", "")
-            if travel_tips == "TBD" or len(travel_tips.strip()) < 20:
-                relevant_data = self.query_retriever(destination, "travel_tips", 1)
-                if relevant_data:
-                    day_data["travel_tips"] = relevant_data[0]["content"]
-                else:
-                    day_data["travel_tips"] = f"Plan your trip to {destination} with local insights and practical tips."
-        
-        # Update AI provider to show enrichment
-        enriched["ai_provider"] = f"{enriched.get('ai_provider', 'Unknown')} + Knowledge Enrichment"
-        
-        logger.info("Skeleton enrichment completed")
+    Returns:
+        Enriched itinerary with factual, destination-specific content
+    """
+    if retriever is None:
+        retriever = DataRetriever()
+    
+    enriched = skeleton.copy()
+    destination = skeleton.get("destination", "")
+    
+    if not destination:
+        logger.warning("No destination in skeleton, returning unchanged")
         return enriched
-
-def enrich_skeleton(skeleton: Dict) -> Dict:
-    """Convenience function to enrich a skeleton."""
-    retriever = DataRetriever()
-    return retriever.enrich_skeleton(skeleton)
-
-# Example usage
-if __name__ == "__main__":
-    # Test the data retriever
-    retriever = DataRetriever()
     
-    # Test query
-    results = retriever.query_retriever("london", "cultural_insight", 2)
-    print(f"Query results: {len(results)} items")
-    for result in results:
-        print(f"- {result['content'][:100]}...")
+    logger.info(f"Enriching skeleton for {destination}")
     
-    # Test skeleton enrichment
-    test_skeleton = {
-        "summary": "Your 3-day journey to London",
-        "itinerary": [
-            {
-                "day": 1,
-                "theme": "Day 1: London introduction",
-                "activities": ["TBD", "TBD", "TBD"],
-                "highlights": ["TBD", "TBD"],
-                "cultural_insight": "TBD",
-                "local_secrets": "TBD",
-                "travel_tips": "TBD"
-            }
-        ],
-        "estimated_budget": "medium",
-        "ai_provider": "Test"
+    # Ensure we have data for this destination
+    retriever.ingest_destination_data(destination)
+    
+    # Enrich each day in the itinerary
+    for day_data in enriched.get("itinerary", []):
+        day_num = day_data.get("day", 0)
+        logger.debug(f"Enriching day {day_num} for {destination}")
+        
+        # Enrich activities with real attractions
+        activities = day_data.get("activities", [])
+        enriched_activities = []
+        
+        # Get attraction data for activities
+        attraction_data = retriever.query_retriever(destination, "attractions", max_results=len(activities))
+        
+        for i, activity in enumerate(activities):
+            if activity == "TBD" and i < len(attraction_data):
+                # Replace TBD with real attraction
+                enriched_activities.append(attraction_data[i])
+            elif "TBD" not in activity:
+                # Keep existing specific activity
+                enriched_activities.append(activity)
+            else:
+                # Fallback for TBD without data
+                enriched_activities.append(f"Explore {destination} attractions and landmarks")
+        
+        day_data["activities"] = enriched_activities
+        
+        # Enrich highlights
+        if not day_data.get("highlights") or "TBD" in str(day_data.get("highlights", [])):
+            highlights_data = retriever.query_retriever(destination, "highlights", max_results=3)
+            if highlights_data:
+                day_data["highlights"] = highlights_data[:3]
+        
+        # Enrich cultural insights
+        if day_data.get("cultural_insight") == "TBD" or not day_data.get("cultural_insight"):
+            cultural_data = retriever.query_retriever(destination, "cultural_insight", max_results=1)
+            if cultural_data:
+                day_data["cultural_insight"] = cultural_data[0]
+        
+        # Enrich local secrets
+        if day_data.get("local_secrets") == "TBD" or not day_data.get("local_secrets"):
+            secrets_data = retriever.query_retriever(destination, "local_secrets", max_results=1)
+            if secrets_data:
+                day_data["local_secrets"] = secrets_data[0]
+        
+        # Enrich travel tips
+        if day_data.get("travel_tips") == "TBD" or not day_data.get("travel_tips"):
+            tips_data = retriever.query_retriever(destination, "travel_tips", max_results=1)
+            if tips_data:
+                day_data["travel_tips"] = tips_data[0]
+    
+    # Add enrichment metadata
+    enriched["enrichment_info"] = {
+        "enriched_at": time.time(),
+        "enriched_destination": destination,
+        "data_sources": ["wikivoyage", "curated", "template"],
+        "enrichment_success": True
     }
     
-    enriched = retriever.enrich_skeleton(test_skeleton)
-    print("\nEnriched skeleton:")
-    print(json.dumps(enriched, indent=2))
+    logger.info(f"Successfully enriched skeleton for {destination}")
+    return enriched
+
+def create_two_stage_pipeline(destination: str, days: int, from_city: str = "various locations",
+                             budget: str = "medium", interests: List[str] = None,
+                             base_url: str = None, api_key: str = None, 
+                             model: str = "nvidia/gpt-oss-120b") -> Dict:
+    """
+    Complete two-stage pipeline: Skeleton Builder + Knowledge Grounding.
+    
+    Args:
+        destination: Target destination city
+        days: Number of days for the trip
+        from_city: Origin city
+        budget: Budget level
+        interests: List of traveler interests
+        base_url: Optional custom API base URL
+        api_key: Optional custom API key
+        model: AI model to use
+        
+    Returns:
+        Complete enriched itinerary
+    """
+    from .skeleton_builder import build_skeleton
+    
+    logger.info(f"Starting two-stage pipeline for {destination}")
+    
+    # Stage 1: Generate skeleton using GPT-OSS-120B
+    logger.info("Stage 1: Building skeleton with GPT-OSS-120B")
+    skeleton = build_skeleton(destination, days, from_city, budget, interests, 
+                            base_url, api_key, model)
+    
+    # Stage 2: Enrich with factual knowledge
+    logger.info("Stage 2: Enriching with factual knowledge")
+    retriever = DataRetriever()
+    enriched = enrich_skeleton(skeleton, retriever)
+    
+    # Add pipeline metadata
+    enriched["pipeline_info"] = {
+        "stages_completed": ["skeleton_builder", "knowledge_enrichment"],
+        "skeleton_validation": True,
+        "enrichment_success": True,
+        "pipeline_type": "two_stage_ai_enhanced",
+        "ai_model": model
+    }
+    
+    logger.info(f"Two-stage pipeline completed for {destination}")
+    return enriched
+
+# Export for pipeline integration
+__all__ = ["DataRetriever", "enrich_skeleton", "create_two_stage_pipeline"]

@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List
 from ..models import TravelPlanRequest, TravelPlanResponse
 from ..services.gpt_oss import generate_itinerary
-from ..pipeline import generate_itinerary_pipeline
+from ..pipeline import generate_itinerary_pipeline_enhanced, generate_itinerary_pipeline
 from ..services.llm_client import is_configured
 import json
 import logging
@@ -54,15 +54,27 @@ async def plan_travel(request: TravelPlanRequest):
             )
             logger.info("GPT-OSS AI generation successful")
         except Exception as ai_error:
-            logger.warning(f"GPT-OSS AI failed, falling back to standalone pipeline: {ai_error}")
-            # Fallback to standalone pipeline
-            itinerary_data = generate_itinerary_pipeline(
-                destination=request.destination,
-                days=days,
-                from_city=request.from_city,
-                budget=request.budget,
-                interests=request.interests
-            )
+            logger.warning(f"GPT-OSS AI failed, falling back to enhanced two-stage pipeline: {ai_error}")
+            # Fallback to enhanced two-stage pipeline (AI + Knowledge)
+            try:
+                itinerary_data = generate_itinerary_pipeline_enhanced(
+                    destination=request.destination,
+                    days=days,
+                    from_city=request.from_city,
+                    budget=request.budget,
+                    interests=request.interests
+                )
+                logger.info("Enhanced two-stage pipeline successful")
+            except Exception as pipeline_error:
+                logger.warning(f"Enhanced pipeline failed, using basic standalone: {pipeline_error}")
+                # Final fallback to basic standalone
+                itinerary_data = generate_itinerary_pipeline(
+                    destination=request.destination,
+                    days=days,
+                    from_city=request.from_city,
+                    budget=request.budget,
+                    interests=request.interests
+                )
         
         # Debug logging
         print(f"DEBUG: itinerary_data type: {type(itinerary_data)}")
