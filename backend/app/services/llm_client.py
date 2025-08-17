@@ -11,6 +11,12 @@ _DEF_BASE = os.getenv("LLM_BASE_URL", "")
 _DEF_KEY = os.getenv("LLM_API_KEY", "")
 _DEF_MODEL = os.getenv("LLM_MODEL", "gpt-4")
 
+def is_configured() -> bool:
+    """
+    Check if LLM is properly configured with base URL and API key.
+    """
+    return bool(_DEF_BASE and _DEF_KEY)
+
 def chat(messages: List[Dict[str, str]], *, base_url: Optional[str] = None, api_key: Optional[str] = None, model: Optional[str] = None) -> str:
     """
     Send messages to LLM and get response with intelligent fallbacks.
