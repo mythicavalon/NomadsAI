@@ -54,6 +54,8 @@ async def generate_itinerary(
 	budget: Optional[str],
 	interests: List[str],
 	travel_month: Optional[str],
+	from_city: Optional[str] = None,
+	travelers: Optional[int] = 1,
 	base_url: Optional[str] = None,
 	api_key: Optional[str] = None,
 	model: Optional[str] = None,
@@ -63,7 +65,7 @@ async def generate_itinerary(
 		attractions = fetch_top_attractions(destination, max_items=15)  # Increased for better context
 		bullets = "\n".join([f"- {a['title']}: {a['extract'][:160]}" for a in attractions]) or "- city walk"
 		
-		# Enhanced prompt for better AI understanding
+		# Enhanced prompt for better AI understanding with from/to context
 		enhanced_prompt = [
 			{
 				"role": "system", 
@@ -89,18 +91,22 @@ Output a JSON with the following structure:
   ],
   "estimated_budget": "budget level with reasoning",
   "cultural_insights": "2-3 key cultural tips for this destination",
-  "local_recommendations": "2-3 authentic local experiences beyond typical tourist spots"
+  "local_recommendations": "2-3 authentic local experiences beyond typical tourist spots",
+  "travel_tips": "Practical advice for travelers from [FROM_CITY] visiting [DESTINATION]"
 }
 
 Keep descriptions engaging and informative. Consider local customs, best times to visit attractions, and practical travel tips."""
 			},
 			{
 				"role": "user", 
-				"content": f"""Destination: {destination}
-Days: {days}
+				"content": f"""Travel Plan:
+From: {from_city or 'Unknown'}
+To: {destination}
+Duration: {days} days
 Budget: {budget or 'medium'}
 Interests: {', '.join(interests) if interests else 'general exploration'}
 Travel month: {travel_month or 'unspecified'}
+Travelers: {travelers}
 
 Please create a sophisticated itinerary that includes:
 - Cultural immersion opportunities
@@ -108,11 +114,12 @@ Please create a sophisticated itinerary that includes:
 - Hidden gems and off-the-beaten-path locations
 - Practical timing and logistics
 - Cultural etiquette tips
+- Travel advice specific to visitors from {from_city or 'various locations'}
 
 Available attractions and context:
 {bullets}
 
-Make this itinerary feel like it was crafted by a local expert who knows the destination intimately."""
+Make this itinerary feel like it was crafted by a local expert who knows the destination intimately and understands the needs of travelers from {from_city or 'different backgrounds'}."""
 			}
 		]
 		
@@ -158,7 +165,10 @@ Make this itinerary feel like it was crafted by a local expert who knows the des
 						"ai_enhanced": True,
 						"cultural_insights": parsed.get("cultural_insights", ""),
 						"local_recommendations": parsed.get("local_recommendations", ""),
-						"ai_provider": "NVIDIA NIM GPT-OSS-120B" if not base_url else "Custom LLM"
+						"travel_tips": parsed.get("travel_tips", ""),
+						"ai_provider": "NVIDIA NIM GPT-OSS-120B" if not base_url else "Custom LLM",
+						"from_city": from_city,
+						"travelers": travelers
 					}
 					
 					return result
@@ -173,7 +183,7 @@ Make this itinerary feel like it was crafted by a local expert who knows the des
 			pass
 
 	# Enhanced fallback: knowledge-driven deterministic plan with better structure
-	rng = random.Random(f"{destination}:{days}:{budget}:{','.join(interests)}:{travel_month}")
+	rng = random.Random(f"{from_city}:{destination}:{days}:{budget}:{','.join(interests)}:{travel_month}")
 	events = load_events_for_city(destination)
 	knowledge = load_city_knowledge(destination) or {}
 
@@ -266,5 +276,7 @@ Make this itinerary feel like it was crafted by a local expert who knows the des
 		"day_plans": [dp.dict() for dp in day_plans],
 		"surprise_picks": surprise_picks_for(destination),
 		"ai_enhanced": False,
-		"ai_provider": "Knowledge-based fallback"
+		"ai_provider": "Knowledge-based fallback",
+		"from_city": from_city,
+		"travelers": travelers
 	}

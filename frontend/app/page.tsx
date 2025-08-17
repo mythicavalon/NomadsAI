@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { clsx } from "clsx";
-import { Search, MapPin, Calendar, Users, DollarSign, Sparkles, TrendingUp, Globe, Clock, Star, Diamond, Crown, Plane, Zap, Brain, CheckCircle } from "lucide-react";
+import { Search, MapPin, Calendar, Users, DollarSign, Sparkles, TrendingUp, Globe, Clock, Star, Diamond, Crown, Plane, Zap, Brain, CheckCircle, ArrowRight, Building2, Compass, Shield, Zap as Lightning } from "lucide-react";
 import { Button, Input, Card, Select, Checkbox } from "../components/ui";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
@@ -16,75 +16,92 @@ type AIStatus = {
 	features: string[];
 };
 
-// Comprehensive city database for autocomplete
+type TravelPlan = {
+	from: string;
+	to: string;
+	departureDate: string;
+	returnDate: string;
+	travelers: number;
+	budget: string;
+	interests: string[];
+	itinerary?: any;
+};
+
+// Professional city database with proper search
 const WORLD_CITIES = [
-	// Elite destinations
-	{ name: "Barcelona, Spain", country: "Spain", blurb: "Gaudí architecture, Mediterranean elegance, sophisticated culture", trending: true },
-	{ name: "Tokyo, Japan", country: "Japan", blurb: "Modern metropolis, ancient traditions, culinary excellence", trending: true },
-	{ name: "New York, USA", country: "United States", blurb: "The city that never sleeps, iconic sophistication", trending: false },
-	{ name: "Paris, France", country: "France", blurb: "City of lights, art, romance, and refined cuisine", trending: false },
-	{ name: "London, England", country: "United Kingdom", blurb: "Royal heritage, modern culture, distinguished neighborhoods", trending: false },
-	{ name: "Rome, Italy", country: "Italy", blurb: "Eternal city, ancient grandeur, exceptional gastronomy", trending: false },
-	{ name: "Dubai, UAE", country: "United Arab Emirates", blurb: "Futuristic luxury, opulent shopping, desert adventures", trending: true },
-	{ name: "Bali, Indonesia", country: "Indonesia", blurb: "Tropical paradise, spiritual temples, luxury retreats", trending: true },
-	{ name: "Istanbul, Turkey", country: "Turkey", blurb: "Where East meets West, rich heritage, exquisite cuisine", trending: false },
-	{ name: "Bangkok, Thailand", country: "Thailand", blurb: "Street food excellence, golden temples, vibrant markets", trending: true },
+	// Major Business Hubs
+	{ name: "New York", country: "United States", code: "NYC", category: "business", blurb: "Global financial center and business capital" },
+	{ name: "London", country: "United Kingdom", code: "LON", category: "business", blurb: "European financial hub and cultural center" },
+	{ name: "Tokyo", country: "Japan", code: "TYO", category: "business", blurb: "Asian economic powerhouse and tech innovation" },
+	{ name: "Singapore", country: "Singapore", code: "SIN", category: "business", blurb: "Southeast Asian business and trade hub" },
+	{ name: "Dubai", country: "UAE", code: "DXB", category: "business", blurb: "Middle Eastern business and luxury destination" },
+	{ name: "Hong Kong", country: "China", code: "HKG", category: "business", blurb: "Asian financial center and trade gateway" },
 	
-	// Sophisticated nomad destinations
-	{ name: "Lisbon, Portugal", country: "Portugal", blurb: "Refined charm, perfect weather, nomad-friendly elegance", trending: true },
-	{ name: "Mexico City, Mexico", country: "Mexico", blurb: "Rich culture, exceptional cuisine, sophisticated living", trending: true },
-	{ name: "Berlin, Germany", country: "Germany", blurb: "Creative hub, historical depth, excellent nightlife", trending: false },
-	{ name: "Amsterdam, Netherlands", country: "Netherlands", blurb: "Canals, sophisticated culture, premium coffee", trending: false },
-	{ name: "Singapore", country: "Singapore", blurb: "Garden city, culinary paradise, business excellence", trending: false },
-	{ name: "Prague, Czech Republic", country: "Czech Republic", blurb: "Fairy-tale architecture, premium beer, rich history", trending: false },
-	{ name: "Buenos Aires, Argentina", country: "Argentina", blurb: "Tango, premium steak, European sophistication", trending: false },
-	{ name: "Cape Town, South Africa", country: "South Africa", blurb: "Stunning landscapes, wine excellence, diverse culture", trending: false },
+	// European Destinations
+	{ name: "Paris", country: "France", code: "PAR", category: "culture", blurb: "City of lights, art, and sophisticated culture" },
+	{ name: "Barcelona", country: "Spain", code: "BCN", category: "culture", blurb: "Mediterranean charm and architectural marvels" },
+	{ name: "Rome", country: "Italy", code: "ROM", category: "culture", blurb: "Eternal city with ancient history and culture" },
+	{ name: "Amsterdam", country: "Netherlands", code: "AMS", category: "culture", blurb: "Canals, culture, and European sophistication" },
+	{ name: "Berlin", country: "Germany", code: "BER", category: "culture", blurb: "Creative hub with rich history and innovation" },
+	{ name: "Prague", country: "Czech Republic", code: "PRG", category: "culture", blurb: "Medieval architecture and European heritage" },
 	
-	// Emerging luxury destinations
-	{ name: "Medellín, Colombia", country: "Colombia", blurb: "City of eternal spring, innovation, transformation", trending: true },
-	{ name: "Tbilisi, Georgia", country: "Georgia", blurb: "Sophisticated living, wine culture, stunning mountains", trending: true },
-	{ name: "Ho Chi Minh City, Vietnam", country: "Vietnam", blurb: "Motorbike culture, exceptional pho, French colonial charm", trending: true },
-	{ name: "Kuala Lumpur, Malaysia", country: "Malaysia", blurb: "Modern skyline, diverse cuisine, luxury affordability", trending: false },
-	{ name: "Warsaw, Poland", country: "Poland", blurb: "Rising tech hub, rich history, European sophistication", trending: false },
-	{ name: "Lagos, Nigeria", country: "Nigeria", blurb: "African megacity, Afrobeats culture, business opportunities", trending: true },
+	// Asian Destinations
+	{ name: "Bangkok", country: "Thailand", code: "BKK", category: "culture", blurb: "Thai culture, street food, and golden temples" },
+	{ name: "Seoul", country: "South Korea", code: "SEL", category: "tech", blurb: "Korean culture and technological innovation" },
+	{ name: "Bali", country: "Indonesia", code: "DPS", category: "leisure", blurb: "Tropical paradise and spiritual retreats" },
+	{ name: "Mumbai", country: "India", code: "BOM", category: "business", blurb: "Indian business hub and cultural diversity" },
+	
+	// Americas
+	{ name: "Mexico City", country: "Mexico", code: "MEX", category: "culture", blurb: "Rich Mexican culture and culinary excellence" },
+	{ name: "São Paulo", country: "Brazil", code: "SAO", category: "business", blurb: "Brazilian business center and cultural hub" },
+	{ name: "Toronto", country: "Canada", code: "YYZ", category: "business", blurb: "Canadian business hub and multicultural city" },
+	{ name: "Buenos Aires", country: "Argentina", code: "BUE", category: "culture", blurb: "Argentine culture, tango, and European charm" },
+	
+	// Emerging Markets
+	{ name: "Istanbul", country: "Turkey", code: "IST", category: "culture", blurb: "Where East meets West, rich heritage" },
+	{ name: "Cape Town", country: "South Africa", code: "CPT", category: "leisure", blurb: "Stunning landscapes and diverse culture" },
+	{ name: "Lagos", country: "Nigeria", code: "LOS", category: "business", blurb: "African megacity and business opportunities" },
+	{ name: "Medellín", country: "Colombia", code: "MDE", category: "culture", blurb: "City of eternal spring and innovation" }
 ];
 
 export default function HomePage() {
-	const [destination, setDestination] = useState("");
+	const [travelPlan, setTravelPlan] = useState<TravelPlan>({
+		from: "",
+		to: "",
+		departureDate: "",
+		returnDate: "",
+		travelers: 1,
+		budget: "premium",
+		interests: ["business", "culture"]
+	});
+	
 	const [searchQuery, setSearchQuery] = useState("");
 	const [filteredCities, setFilteredCities] = useState<typeof WORLD_CITIES>([]);
 	const [showSuggestions, setShowSuggestions] = useState(false);
-	const [days, setDays] = useState(7);
-	const [budget, setBudget] = useState("luxury");
-	const [interests, setInterests] = useState<string[]>(["culture", "food"]);
-	const [travelers, setTravelers] = useState(1);
+	const [activeSearch, setActiveSearch] = useState<"from" | "to" | null>(null);
 	const [signals, setSignals] = useState<Signal[]>([]);
-	const [itinerary, setItinerary] = useState<any>(null);
-	const [surprise, setSurprise] = useState<string[] | null>(null);
 	const [loading, setLoading] = useState(false);
-	const [onlineMode, setOnlineMode] = useState(true);
 	const [aiStatus, setAiStatus] = useState<AIStatus | null>(null);
-	const searchRef = useRef<HTMLDivElement>(null);
+	const [searchRef, useRef] = useState<HTMLDivElement | null>(null);
 
 	const interestOptions = [
-		{ id: "culture", label: "Culture & Heritage", icon: "🏛️" },
-		{ id: "food", label: "Culinary Excellence", icon: "🍽️" },
-		{ id: "adventure", label: "Adventure", icon: "🏔️" },
-		{ id: "relax", label: "Luxury Relaxation", icon: "🏖️" },
-		{ id: "nightlife", label: "Sophisticated Nightlife", icon: "🌃" },
-		{ id: "nature", label: "Natural Beauty", icon: "🌿" },
-		{ id: "art", label: "Art & Museums", icon: "🎨" },
-		{ id: "shopping", label: "Premium Shopping", icon: "🛍️" }
+		{ id: "business", label: "Business & Corporate", icon: Building2 },
+		{ id: "culture", label: "Culture & Heritage", icon: Compass },
+		{ id: "leisure", label: "Leisure & Relaxation", icon: Star },
+		{ id: "adventure", label: "Adventure & Exploration", icon: Globe },
+		{ id: "food", label: "Culinary Excellence", icon: Diamond },
+		{ id: "tech", label: "Technology & Innovation", icon: Zap }
 	];
 
-	const featuredDestinations = WORLD_CITIES.filter(city => city.trending).slice(0, 6);
+	const featuredDestinations = WORLD_CITIES.filter(city => city.category === "business").slice(0, 6);
 
 	// Handle search input and filtering
 	useEffect(() => {
 		if (searchQuery.length > 0) {
 			const filtered = WORLD_CITIES.filter(city =>
 				city.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				city.country.toLowerCase().includes(searchQuery.toLowerCase())
+				city.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
+				city.code.toLowerCase().includes(searchQuery.toLowerCase())
 			).slice(0, 8);
 			setFilteredCities(filtered);
 			setShowSuggestions(true);
@@ -93,17 +110,6 @@ export default function HomePage() {
 			setShowSuggestions(false);
 		}
 	}, [searchQuery]);
-
-	// Handle clicks outside search
-	useEffect(() => {
-		function handleClickOutside(event: MouseEvent) {
-			if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-				setShowSuggestions(false);
-			}
-		}
-		document.addEventListener("mousedown", handleClickOutside);
-		return () => document.removeEventListener("mousedown", handleClickOutside);
-	}, []);
 
 	// Fetch AI status
 	useEffect(() => {
@@ -138,40 +144,48 @@ export default function HomePage() {
 	}, []);
 
 	const selectCity = (city: any) => {
-		setDestination(city.name);
-		setSearchQuery(city.name);
+		if (activeSearch === "from") {
+			setTravelPlan(prev => ({ ...prev, from: city.name }));
+		} else if (activeSearch === "to") {
+			setTravelPlan(prev => ({ ...prev, to: city.name }));
+		}
+		setSearchQuery("");
 		setShowSuggestions(false);
+		setActiveSearch(null);
 	};
 
 	const toggleInterest = (interestId: string) => {
-		setInterests(prev => 
-			prev.includes(interestId) 
-				? prev.filter(id => id !== interestId)
-				: [...prev, interestId]
-		);
+		setTravelPlan(prev => ({
+			...prev,
+			interests: prev.interests.includes(interestId) 
+				? prev.interests.filter(id => id !== interestId)
+				: [...prev.interests, interestId]
+		}));
 	};
 
 	const handleSearch = async () => {
-		if (!destination) return;
+		if (!travelPlan.from || !travelPlan.to) return;
 		setLoading(true);
 		
 		try {
-			const response = await fetch(`${API_BASE}/api/plan`, {
+			const response = await fetch(`${API_BASE}/api/itineraries/plan`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					destination,
-					days,
-					budget,
-					interests,
-					travelers,
-					online_mode: onlineMode
+					from_city: travelPlan.from,
+					destination: travelPlan.to,
+					days: Math.ceil((new Date(travelPlan.returnDate).getTime() - new Date(travelPlan.departureDate).getTime()) / (1000 * 60 * 60 * 24)),
+					budget: travelPlan.budget,
+					interests: travelPlan.interests,
+					travelers: travelPlan.travelers,
+					departure_date: travelPlan.departureDate,
+					return_date: travelPlan.returnDate
 				})
 			});
 			
 			if (response.ok) {
 				const data = await response.json();
-				setItinerary(data.itinerary);
+				setTravelPlan(prev => ({ ...prev, itinerary: data.itinerary }));
 			}
 		} catch (error) {
 			console.error('Error planning trip:', error);
@@ -183,10 +197,10 @@ export default function HomePage() {
 	const handleSurprise = async () => {
 		setLoading(true);
 		try {
-			const response = await fetch(`${API_BASE}/api/surprise`);
+			const response = await fetch(`${API_BASE}/api/itineraries/surprise`);
 			if (response.ok) {
 				const data = await response.json();
-				setSurprise(data.suggestions || []);
+				// Handle surprise response
 			}
 		} catch (error) {
 			console.error('Error getting surprise:', error);
@@ -194,6 +208,8 @@ export default function HomePage() {
 			setLoading(false);
 		}
 	};
+
+	const isFormValid = travelPlan.from && travelPlan.to && travelPlan.departureDate && travelPlan.returnDate;
 
 	return (
 		<div className="space-y-16 animate-fade-in">
@@ -207,7 +223,7 @@ export default function HomePage() {
 								Powered by NVIDIA NIM GPT-OSS-120B
 							</div>
 							<div className="text-xs text-gray-400">
-								Advanced AI travel planning with cultural intelligence
+								Enterprise-grade AI travel planning with cultural intelligence
 							</div>
 						</div>
 					</div>
@@ -218,83 +234,237 @@ export default function HomePage() {
 			<section className="text-center space-y-8">
 				<div className="space-y-6">
 					<h1 className="heading-3xl text-gradient">
-						Your AI-Powered Travel Companion
+						Professional Travel Intelligence Platform
 					</h1>
 					<p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-						Experience intelligent travel planning with NVIDIA's advanced AI that learns your preferences, 
-						discovers hidden gems, and creates personalized adventures just for you.
+						Enterprise-grade travel planning powered by NVIDIA's advanced AI. 
+						From business trips to cultural expeditions, get intelligent recommendations 
+						that understand your professional and personal travel needs.
 					</p>
 				</div>
 
-				{/* Search Interface */}
-				<div className="max-w-4xl mx-auto space-y-6">
-					<div className="relative" ref={searchRef}>
-						<Input
-							placeholder="Where would you like to go?"
-							value={searchQuery}
-							onChange={(e) => setSearchQuery(e.target.value)}
-							leftIcon={<Search className="w-5 h-5" />}
-							className="text-lg py-4"
-						/>
-						
-						{/* Search Suggestions */}
-						{showSuggestions && filteredCities.length > 0 && (
-							<div className="absolute top-full left-0 right-0 mt-2 glass rounded-xl border border-gray-700/50 overflow-hidden z-10 animate-scale-in">
-								{filteredCities.map((city, idx) => (
-									<button
-										key={idx}
-										onClick={() => selectCity(city)}
-										className="w-full p-4 text-left hover:bg-gray-800/50 transition-colors duration-200 border-b border-gray-700/30 last:border-b-0"
-									>
-										<div className="flex items-center gap-3">
-											<MapPin className="w-5 h-5 text-accent-400 flex-shrink-0" />
-											<div className="flex-1">
-												<div className="font-semibold text-white">{city.name}</div>
-												<div className="text-gray-300 text-sm mt-1">{city.blurb}</div>
-											</div>
-											{city.trending && (
-												<div className="flex items-center gap-2 text-xs bg-accent-500/20 text-accent-400 px-3 py-2 rounded-full">
-													<TrendingUp className="w-4 h-4" />
-													Trending
-												</div>
-											)}
-										</div>
-									</button>
-								))}
-							</div>
-						)}
-					</div>
+				{/* Travel Planning Interface */}
+				<div className="max-w-5xl mx-auto">
+					<Card className="space-y-8">
+						<div className="text-center space-y-4">
+							<h2 className="heading-xl">Plan Your Journey</h2>
+							<p className="text-gray-300">Complete travel planning with AI-powered intelligence</p>
+						</div>
 
-					{/* Action Buttons */}
-					<div className="flex flex-col sm:flex-row gap-4 justify-center">
-						<Button
-							size="lg"
-							onClick={handleSearch}
-							loading={loading}
-							leftIcon={<Plane className="w-5 h-5" />}
-							disabled={!destination}
-						>
-							Plan My Trip
-						</Button>
-						<Button
-							variant="secondary"
-							size="lg"
-							onClick={handleSurprise}
-							loading={loading}
-							leftIcon={<Sparkles className="w-5 h-5" />}
-						>
-							Surprise Me
-						</Button>
-					</div>
+						{/* From/To Fields */}
+						<div className="grid md:grid-cols-2 gap-6">
+							{/* From Field */}
+							<div className="space-y-3">
+								<label className="block text-sm font-medium text-gray-300">
+									Departure City
+								</label>
+								<div className="relative">
+									<Input
+										placeholder="Where are you leaving from?"
+										value={travelPlan.from}
+										onChange={(e) => {
+											setTravelPlan(prev => ({ ...prev, from: e.target.value }));
+											setSearchQuery(e.target.value);
+											setActiveSearch("from");
+										}}
+										onFocus={() => setActiveSearch("from")}
+										leftIcon={<MapPin className="w-5 h-5" />}
+									/>
+									
+									{/* Search Suggestions for From */}
+									{activeSearch === "from" && showSuggestions && filteredCities.length > 0 && (
+										<div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 rounded-xl border border-gray-700 overflow-hidden z-10 animate-scale-in">
+											{filteredCities.map((city, idx) => (
+												<button
+													key={idx}
+													onClick={() => selectCity(city)}
+													className="w-full p-4 text-left hover:bg-gray-700/50 transition-colors duration-200 border-b border-gray-700/30 last:border-b-0"
+												>
+													<div className="flex items-center gap-3">
+														<MapPin className="w-5 h-5 text-accent-400 flex-shrink-0" />
+														<div className="flex-1">
+															<div className="font-semibold text-white">{city.name}</div>
+															<div className="text-gray-300 text-sm mt-1">{city.blurb}</div>
+														</div>
+														<div className="text-xs bg-accent-500/20 text-accent-400 px-3 py-2 rounded-full">
+															{city.code}
+														</div>
+													</div>
+												</button>
+											))}
+										</div>
+									)}
+								</div>
+							</div>
+
+							{/* To Field */}
+							<div className="space-y-3">
+								<label className="block text-sm font-medium text-gray-300">
+									Destination City
+								</label>
+								<div className="relative">
+									<Input
+										placeholder="Where are you going?"
+										value={travelPlan.to}
+										onChange={(e) => {
+											setTravelPlan(prev => ({ ...prev, to: e.target.value }));
+											setSearchQuery(e.target.value);
+											setActiveSearch("to");
+										}}
+										onFocus={() => setActiveSearch("to")}
+										leftIcon={<MapPin className="w-5 h-5" />}
+									/>
+									
+									{/* Search Suggestions for To */}
+									{activeSearch === "to" && showSuggestions && filteredCities.length > 0 && (
+										<div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 rounded-xl border border-gray-700 overflow-hidden z-10 animate-scale-in">
+											{filteredCities.map((city, idx) => (
+												<button
+													key={idx}
+													onClick={() => selectCity(city)}
+													className="w-full p-4 text-left hover:bg-gray-700/50 transition-colors duration-200 border-b border-gray-700/30 last:border-b-0"
+												>
+													<div className="flex items-center gap-3">
+														<MapPin className="w-5 h-5 text-accent-400 flex-shrink-0" />
+														<div className="flex-1">
+															<div className="font-semibold text-white">{city.name}</div>
+															<div className="text-gray-300 text-sm mt-1">{city.blurb}</div>
+														</div>
+														<div className="text-xs bg-accent-500/20 text-accent-400 px-3 py-2 rounded-full">
+															{city.code}
+														</div>
+													</div>
+												</button>
+											))}
+										</div>
+									)}
+								</div>
+							</div>
+						</div>
+
+						{/* Dates and Travelers */}
+						<div className="grid md:grid-cols-3 gap-6">
+							<div className="space-y-3">
+								<label className="block text-sm font-medium text-gray-300">
+									Departure Date
+								</label>
+								<Input
+									type="date"
+									value={travelPlan.departureDate}
+									onChange={(e) => setTravelPlan(prev => ({ ...prev, departureDate: e.target.value }))}
+									leftIcon={<Calendar className="w-5 h-5" />}
+								/>
+							</div>
+
+							<div className="space-y-3">
+								<label className="block text-sm font-medium text-gray-300">
+									Return Date
+								</label>
+								<Input
+									type="date"
+									value={travelPlan.returnDate}
+									onChange={(e) => setTravelPlan(prev => ({ ...prev, returnDate: e.target.value }))}
+									leftIcon={<Calendar className="w-5 h-5" />}
+								/>
+							</div>
+
+							<div className="space-y-3">
+								<label className="block text-sm font-medium text-gray-300">
+									Travelers
+								</label>
+								<Select
+									value={travelPlan.travelers.toString()}
+									onChange={(value) => setTravelPlan(prev => ({ ...prev, travelers: parseInt(value) }))}
+									options={[
+										{ value: 1, label: "1 person" },
+										{ value: 2, label: "2 people" },
+										{ value: 3, label: "3 people" },
+										{ value: 4, label: "4 people" },
+										{ value: 5, label: "5+ people" }
+									]}
+									leftIcon={<Users className="w-5 h-5" />}
+								/>
+							</div>
+						</div>
+
+						{/* Budget and Interests */}
+						<div className="grid md:grid-cols-2 gap-8">
+							<div className="space-y-4">
+								<label className="block text-sm font-medium text-gray-300">
+									Experience Level
+								</label>
+								<Select
+									value={travelPlan.budget}
+									onChange={(value) => setTravelPlan(prev => ({ ...prev, budget: value }))}
+									options={[
+										{ value: "essential", label: "Essential ($50-100/day)" },
+										{ value: "premium", label: "Premium ($150-300/day)" },
+										{ value: "luxury", label: "Luxury ($400+/day)" }
+									]}
+									leftIcon={<Crown className="w-5 h-5" />}
+								/>
+							</div>
+
+							<div className="space-y-4">
+								<label className="block text-sm font-medium text-gray-300">
+									Travel Interests
+								</label>
+								<div className="grid grid-cols-2 gap-3">
+									{interestOptions.map(option => {
+										const IconComponent = option.icon;
+										return (
+											<button
+												key={option.id}
+												onClick={() => toggleInterest(option.id)}
+												className={clsx(
+													"flex items-center gap-3 p-3 rounded-lg border transition-all duration-200",
+													travelPlan.interests.includes(option.id)
+														? "bg-accent-500/20 border-accent-400 text-accent-400"
+														: "bg-gray-800/50 border-gray-700 text-gray-300 hover:border-gray-600"
+												)}
+											>
+												<IconComponent className="w-4 h-4" />
+												<span className="text-sm font-medium">{option.label}</span>
+											</button>
+										);
+									})}
+								</div>
+							</div>
+						</div>
+
+						{/* Action Buttons */}
+						<div className="flex flex-wrap items-center justify-center gap-6">
+							<Button
+								size="lg"
+								onClick={handleSearch}
+								loading={loading}
+								leftIcon={<Plane className="w-5 h-5" />}
+								disabled={!isFormValid}
+								className="min-w-[200px]"
+							>
+								Plan My Journey
+							</Button>
+							<Button
+								variant="secondary"
+								size="lg"
+								onClick={handleSurprise}
+								loading={loading}
+								leftIcon={<Sparkles className="w-5 h-5" />}
+								className="min-w-[200px]"
+							>
+								AI Recommendations
+							</Button>
+						</div>
+					</Card>
 				</div>
 			</section>
 
 			{/* Featured Destinations */}
 			<section className="space-y-8">
 				<div className="text-center space-y-4">
-					<h2 className="heading-2xl">Trending Destinations</h2>
+					<h2 className="heading-2xl">Global Business Hubs</h2>
 					<p className="text-gray-300 max-w-2xl mx-auto">
-						Discover the most popular destinations our AI has been helping travelers explore
+						Top destinations for corporate travel and business expansion
 					</p>
 				</div>
 
@@ -302,150 +472,34 @@ export default function HomePage() {
 					{featuredDestinations.map((city, idx) => (
 						<button
 							key={idx}
-							onClick={() => selectCity(city)}
-							className="group p-6 glass rounded-2xl hover:glass-strong transition-all duration-300 transform hover:-translate-y-2 hover:shadow-glow"
+							onClick={() => setTravelPlan(prev => ({ ...prev, to: city.name }))}
+							className="group p-6 bg-gray-800 rounded-2xl hover:bg-gray-700 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg"
 						>
-							<div className="text-3xl mb-3 group-hover:scale-110 transition-transform duration-300">
-								{city.country === "Japan" ? "🗾" : 
-								 city.country === "Spain" ? "🇪🇸" : 
-								 city.country === "Indonesia" ? "🏝️" : 
-								 city.country === "UAE" ? "🏗️" : 
-								 city.country === "Portugal" ? "🇵🇹" : 
-								 city.country === "Mexico" ? "🇲🇽" : "🌍"}
-							</div>
-							<div className="text-sm font-semibold text-white group-hover:text-accent-400 transition-colors duration-300">
-								{city.name.split(',')[0]}
+							<div className="text-center space-y-3">
+								<div className="w-16 h-16 bg-accent-500/20 rounded-full flex items-center justify-center mx-auto group-hover:bg-accent-500/30 transition-colors duration-300">
+									<Building2 className="w-8 h-8 text-accent-400" />
+								</div>
+								<div className="space-y-1">
+									<div className="font-semibold text-white group-hover:text-accent-400 transition-colors duration-300">
+										{city.name}
+									</div>
+									<div className="text-xs text-gray-400">{city.country}</div>
+									<div className="text-xs bg-accent-500/20 text-accent-400 px-2 py-1 rounded-full">
+										{city.code}
+									</div>
+								</div>
 							</div>
 						</button>
 					))}
 				</div>
 			</section>
 
-			{/* Planning Interface */}
-			<section className="space-y-8">
-				<div className="text-center space-y-4">
-					<h2 className="heading-2xl">Customize Your Experience</h2>
-					<p className="text-gray-300 max-w-2xl mx-auto">
-						Fine-tune your travel preferences to get the most personalized recommendations from our advanced AI
-					</p>
-				</div>
-
-				<Card className="space-y-8">
-					<div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-						{/* Duration */}
-						<Select
-							label="Duration"
-							value={days.toString()}
-							onChange={(value) => setDays(parseInt(value))}
-							options={[
-								{ value: 3, label: "3 days" },
-								{ value: 5, label: "5 days" },
-								{ value: 7, label: "1 week" },
-								{ value: 10, label: "10 days" },
-								{ value: 14, label: "2 weeks" },
-								{ value: 21, label: "3 weeks" },
-								{ value: 30, label: "1 month" }
-							]}
-							leftIcon={<Calendar className="w-5 h-5" />}
-						/>
-
-						{/* Budget */}
-						<Select
-							label="Experience Level"
-							value={budget}
-							onChange={setBudget}
-							options={[
-								{ value: "budget", label: "Essential ($50-100/day)" },
-								{ value: "medium", label: "Premium ($150-300/day)" },
-								{ value: "luxury", label: "Luxury ($400+/day)" }
-							]}
-							leftIcon={<Crown className="w-5 h-5" />}
-						/>
-
-						{/* Travelers */}
-						<Select
-							label="Party Size"
-							value={travelers.toString()}
-							onChange={(value) => setTravelers(parseInt(value))}
-							options={[
-								{ value: 1, label: "Solo traveler" },
-								{ value: 2, label: "Couple" },
-								{ value: 3, label: "3 people" },
-								{ value: 4, label: "4 people" },
-								{ value: 5, label: "5+ people" }
-							]}
-							leftIcon={<Users className="w-5 h-5" />}
-						/>
-
-						{/* Online Mode */}
-						<div className="space-y-4">
-							<label className="flex items-center gap-3 text-gray-300 font-semibold text-lg">
-								<Globe className="w-5 h-5 text-accent-400" />
-								Intelligence Mode
-							</label>
-							<Checkbox
-								checked={onlineMode}
-								onChange={setOnlineMode}
-								label="Real-time intelligence"
-							/>
-						</div>
-					</div>
-
-					{/* Interests */}
-					<div className="space-y-6">
-						<label className="flex items-center gap-3 text-gray-300 font-semibold text-lg">
-							<Diamond className="w-5 h-5 text-accent-400" />
-							What captures your interest?
-						</label>
-						<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-							{interestOptions.map(option => (
-								<button
-									key={option.id}
-									onClick={() => toggleInterest(option.id)}
-									className={clsx(
-										"flex items-center gap-4 p-5 rounded-xl border transition-all duration-300 transform hover:scale-105",
-										interests.includes(option.id)
-											? "bg-accent-500/20 border-accent-400 text-accent-400 shadow-glow"
-											: "glass border-gray-700/50 text-gray-300 hover:glass-strong hover:border-accent-400/50"
-									)}
-								>
-									<span className="text-2xl">{option.icon}</span>
-									<span className="font-medium">{option.label}</span>
-								</button>
-							))}
-						</div>
-					</div>
-
-					{/* Action Buttons */}
-					<div className="flex flex-wrap items-center justify-center gap-6">
-						<Button
-							size="lg"
-							onClick={handleSearch}
-							loading={loading}
-							leftIcon={<Plane className="w-5 h-5" />}
-							disabled={!destination}
-						>
-							Create My Itinerary
-						</Button>
-						<Button
-							variant="secondary"
-							size="lg"
-							onClick={handleSurprise}
-							loading={loading}
-							leftIcon={<Sparkles className="w-5 h-5" />}
-						>
-							Surprise Me
-						</Button>
-					</div>
-				</Card>
-			</section>
-
 			{/* Features Section */}
 			<section className="space-y-8">
 				<div className="text-center space-y-4">
-					<h2 className="heading-2xl">Why Choose NomadAI?</h2>
+					<h2 className="heading-2xl">Enterprise Travel Intelligence</h2>
 					<p className="text-gray-300 max-w-2xl mx-auto">
-						Experience the future of travel planning with cutting-edge NVIDIA AI technology
+						Professional-grade travel planning with cutting-edge NVIDIA AI technology
 					</p>
 				</div>
 
@@ -454,83 +508,62 @@ export default function HomePage() {
 						<div className="w-16 h-16 bg-accent-500/20 rounded-full flex items-center justify-center mx-auto">
 							<Brain className="w-8 h-8 text-accent-400" />
 						</div>
-						<h3 className="heading-md">Advanced AI Learning</h3>
+						<h3 className="heading-md">AI-Powered Planning</h3>
 						<p className="text-gray-300">
-							Powered by NVIDIA's GPT-OSS-120B model for intelligent, context-aware travel recommendations
+							NVIDIA GPT-OSS-120B model provides intelligent, context-aware travel recommendations
 						</p>
 					</Card>
 
 					<Card className="text-center space-y-4">
 						<div className="w-16 h-16 bg-accent-500/20 rounded-full flex items-center justify-center mx-auto">
-							<Zap className="w-8 h-8 text-accent-400" />
+							<Shield className="w-8 h-8 text-accent-400" />
+						</div>
+						<h3 className="heading-md">Corporate Security</h3>
+						<p className="text-gray-300">
+							Enterprise-grade security and compliance for business travel planning
+						</p>
+					</Card>
+
+					<Card className="text-center space-y-4">
+						<div className="w-16 h-16 bg-accent-500/20 rounded-full flex items-center justify-center mx-auto">
+							<Lightning className="w-8 h-8 text-accent-400" />
 						</div>
 						<h3 className="heading-md">Real-time Intelligence</h3>
 						<p className="text-gray-300">
-							Get live updates on weather, events, and local insights to make informed decisions
-						</p>
-					</Card>
-
-					<Card className="text-center space-y-4">
-						<div className="w-16 h-16 bg-accent-500/20 rounded-full flex items-center justify-center mx-auto">
-							<Star className="w-8 h-8 text-accent-400" />
-						</div>
-						<h3 className="heading-md">Personalized Experiences</h3>
-						<p className="text-gray-300">
-							Every recommendation is tailored to your unique interests, budget, and travel style
+							Live updates on weather, events, and local insights for informed decisions
 						</p>
 					</Card>
 				</div>
 			</section>
 
 			{/* Results Display */}
-			{itinerary && (
+			{travelPlan.itinerary && (
 				<section className="space-y-6 animate-scale-in">
-					<h2 className="heading-2xl text-center">Your Personalized Itinerary</h2>
+					<h2 className="heading-2xl text-center">Your AI-Generated Itinerary</h2>
 					<Card className="space-y-6">
 						<div className="space-y-4">
-							<h3 className="heading-lg text-accent-400">{destination}</h3>
-							<div className="grid md:grid-cols-3 gap-4 text-sm text-gray-300">
-								<div className="flex items-center gap-2">
+							<div className="flex items-center justify-center gap-4 text-lg">
+								<span className="text-gray-300">{travelPlan.from}</span>
+								<ArrowRight className="w-5 h-5 text-accent-400" />
+								<span className="text-accent-400 font-semibold">{travelPlan.to}</span>
+							</div>
+							<div className="grid md:grid-cols-3 gap-4 text-sm text-gray-300 text-center">
+								<div className="flex items-center justify-center gap-2">
 									<Calendar className="w-4 h-4" />
-									{days} days
+									{travelPlan.departureDate} - {travelPlan.returnDate}
 								</div>
-								<div className="flex items-center gap-2">
+								<div className="flex items-center justify-center gap-2">
 									<Users className="w-4 h-4" />
-									{travelers} {travelers === 1 ? 'traveler' : 'travelers'}
+									{travelPlan.travelers} {travelPlan.travelers === 1 ? 'traveler' : 'travelers'}
 								</div>
-								<div className="flex items-center gap-2">
+								<div className="flex items-center justify-center gap-2">
 									<DollarSign className="w-4 h-4" />
-									{budget} budget
+									{travelPlan.budget} budget
 								</div>
 							</div>
 						</div>
 						<div className="prose prose-invert max-w-none">
-							<div dangerouslySetInnerHTML={{ __html: itinerary }} />
-						</div>
-					</Card>
-				</section>
-			)}
-
-			{surprise && (
-				<section className="space-y-6 animate-scale-in">
-					<h2 className="heading-2xl text-center">Surprise Destinations</h2>
-					<Card className="space-y-6">
-						<div className="grid md:grid-cols-2 gap-6">
-							{surprise.map((suggestion: string, idx: number) => (
-								<div key={idx} className="p-4 glass rounded-lg border border-gray-700/50">
-									<h3 className="font-semibold text-white mb-2">{suggestion}</h3>
-									<Button
-										variant="secondary"
-										size="sm"
-										onClick={() => {
-											setDestination(suggestion);
-											setSearchQuery(suggestion);
-										}}
-									>
-										Plan This Trip
-									</Button>
-								</div>
-							))}
+							<div dangerouslySetInnerHTML={{ __html: travelPlan.itinerary }} />
 						</div>
 					</Card>
 				</section>
