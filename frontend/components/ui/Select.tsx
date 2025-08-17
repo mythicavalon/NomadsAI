@@ -15,6 +15,7 @@ export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectE
   placeholder?: string;
   onChange?: (value: string) => void;
   containerClassName?: string;
+  leftIcon?: React.ReactNode;
 }
 
 const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
@@ -27,6 +28,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       placeholder,
       onChange,
       containerClassName,
+      leftIcon,
       id,
       ...props
     },
@@ -36,6 +38,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     
     const selectClasses = clsx(
       'input appearance-none cursor-pointer pr-10',
+      leftIcon && 'pl-12',
       error && 'input--error',
       className
     );
@@ -58,6 +61,12 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         )}
         
         <div className="relative">
+          {leftIcon && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+              {leftIcon}
+            </div>
+          )}
+          
           <select
             ref={ref}
             id={selectId}
