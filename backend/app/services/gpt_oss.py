@@ -88,51 +88,53 @@ async def generate_itinerary(
 		
 		bullets_text = "\n".join(bullets) if bullets else "- city walk"
 		
-		# Enhanced prompt for better AI understanding with from/to context
+		# BULLETPROOF destination-grounded prompt
 		enhanced_prompt = [
 			{
 				"role": "system", 
-				"content": """You are an expert travel planner with deep knowledge of global destinations, cultural nuances, and luxury travel experiences. 
+				"content": f"""You are a travel expert specializing in {destination}. You MUST generate content ONLY for {destination}.
 
-Your task is to create a sophisticated, personalized travel itinerary that balances must-see attractions with authentic local experiences.
+CRITICAL RULES - VIOLATION MEANS REGENERATION:
 
-CRITICAL REQUIREMENTS - ALL FIELDS MUST BE FILLED WITH DESTINATION-SPECIFIC CONTENT:
+1. **DESTINATION LOCK**: Every single field must contain information ONLY about {destination}. NO other cities, countries, or generic content.
 
-1. HIGHLIGHTS: Must contain 3-5 specific attraction names from the chosen destination ONLY. Never include attractions from other cities or countries.
+2. **HIGHLIGHTS**: Must be 3-5 specific attraction names that exist in {destination}. Use actual names from available context when possible.
 
-2. CULTURAL_INSIGHTS: Must provide 2-3 sentences about local customs, etiquette, traditions, and cultural practices specific to the destination.
+3. **CULTURAL_INSIGHTS**: Must be 2-3 sentences about {destination}'s specific customs, etiquette, traditions, and cultural practices.
 
-3. LOCAL_RECOMMENDATIONS: Must provide 2-3 authentic local experiences, hidden gems, and non-touristy tips that locals value in this destination.
+4. **LOCAL_RECOMMENDATIONS**: Must be 2-3 authentic {destination} experiences, hidden gems, and insider tips that locals value.
 
-4. TRAVEL_TIPS: Must provide 3-5 practical travel hacks including transport, safety, money, best seasons, and destination-specific advice.
+5. **TRAVEL_TIPS**: Must be 3-5 practical {destination}-specific tips about transport, safety, money, best seasons, and local advice.
 
-5. ITINERARY: Each day must have exactly 3 activities with specific, real names (not generic terms like 'Morning Exploration').
+6. **ITINERARY**: Each day must have exactly 3 activities with REAL names from {destination}. NO generic terms like 'Morning Exploration'.
 
-Output a JSON with the following structure:
-{
-  "summary": "Concise overview of the entire journey",
+7. **VALIDATION CHECK**: Before returning, verify every field contains {destination}-specific content. If ANY field is generic or empty, regenerate.
+
+Output JSON structure:
+{{
+  "summary": "Concise overview of the {days}-day journey to {destination}",
   "itinerary": [
-    {
+    {{
       "day": 1,
-      "summary": "Brief theme/overview of the day",
+      "summary": "Day 1: {destination} introduction and cultural immersion",
       "activities": [
-        {
+        {{
           "time": "09:00",
-          "title": "Specific activity name (e.g., 'Visit the British Museum')",
-          "description": "Detailed description with cultural context and practical tips (1-2 sentences)",
+          "title": "Specific {destination} attraction or activity name",
+          "description": "Detailed description with {destination}-specific context and practical tips",
           "category": "culture/food/adventure/relaxation/shopping"
-        }
+        }}
       ]
-    }
+    }}
   ],
-  "highlights": ["3-5 specific attraction names from the destination ONLY"],
+  "highlights": ["3-5 specific {destination} attractions ONLY"],
   "estimated_budget": "budget level with reasoning",
-  "cultural_insights": "2-3 sentences about local customs, etiquette, and traditions of the destination",
-  "local_recommendations": "2-3 authentic local experiences and hidden gems in this destination",
-  "travel_tips": "3-5 practical travel hacks for this specific destination (transport, safety, money, best seasons)"
-}
+  "cultural_insights": "2-3 sentences about {destination} customs, etiquette, and traditions",
+  "local_recommendations": "2-3 authentic {destination} experiences and hidden gems",
+  "travel_tips": "3-5 practical {destination}-specific travel hacks"
+}}
 
-VALIDATION: Before returning, ensure every field contains destination-specific, non-empty content. If any field is missing or generic, regenerate the response."""
+REMEMBER: If you cannot provide {destination}-specific content for ANY field, regenerate the entire response."""
 			},
 			{
 				"role": "user", 
@@ -145,32 +147,36 @@ Interests: {', '.join(interests) if interests else 'general exploration'}
 Travel month: {travel_month or 'unspecified'}
 Travelers: {travelers}
 
-Please create a sophisticated itinerary that includes:
-- Cultural immersion opportunities
-- Local culinary experiences
-- Hidden gems and off-the-beaten-path locations
-- Practical timing and logistics
-- Cultural etiquette tips
-- Travel advice specific to visitors from {from_city or 'various locations'}
+Create a sophisticated {destination}-specific itinerary that includes:
+- Cultural immersion opportunities unique to {destination}
+- Local culinary experiences from {destination}
+- Hidden gems and off-the-beaten-path locations in {destination}
+- Practical timing and logistics for {destination}
+- Cultural etiquette tips specific to {destination}
+- Travel advice for visitors from {from_city or 'various locations'} to {destination}
 
-Available attractions and context:
+Available attractions and context for {destination}:
 {bullets_text}
 
-CRITICAL REQUIREMENTS - ALL FIELDS MUST BE DESTINATION-SPECIFIC:
+CRITICAL REQUIREMENTS - VIOLATION MEANS REGENERATION:
 
-1. **HIGHLIGHTS**: Must contain 3-5 specific attraction names from {destination} ONLY. Use actual names from the available context when possible.
+1. **DESTINATION LOCK**: Every single field must contain information ONLY about {destination}. NO other cities, countries, or generic content.
 
-2. **CULTURAL_INSIGHTS**: Must provide 2-3 sentences about local customs, etiquette, traditions, and cultural practices specific to {destination}.
+2. **HIGHLIGHTS**: Must be 3-5 specific attraction names that exist in {destination}. Use actual names from the available context when possible.
 
-3. **LOCAL_RECOMMENDATIONS**: Must provide 2-3 authentic local experiences, hidden gems, and non-touristy tips that locals value in {destination}.
+3. **CULTURAL_INSIGHTS**: Must be 2-3 sentences about {destination}'s specific customs, etiquette, traditions, and cultural practices.
 
-4. **TRAVEL_TIPS**: Must provide 3-5 practical travel hacks for {destination} including transport, safety, money, best seasons, and destination-specific advice.
+4. **LOCAL_RECOMMENDATIONS**: Must be 2-3 authentic {destination} experiences, hidden gems, and insider tips that locals value.
 
-5. **ITINERARY**: Each day must have exactly 3 activities with REAL, SPECIFIC names from {destination}. NO generic terms like "Morning Exploration".
+5. **TRAVEL_TIPS**: Must be 3-5 practical {destination}-specific tips about transport, safety, money, best seasons, and local advice.
 
-6. **VALIDATION**: Ensure every field contains destination-specific, non-empty content. If any field is missing or generic, regenerate.
+6. **ITINERARY**: Each day must have exactly 3 activities with REAL names from {destination}. NO generic terms like "Morning Exploration".
 
-Make this itinerary feel like it was crafted by a local expert who knows {destination} intimately and understands the needs of travelers from {from_city or 'different backgrounds'}."""
+7. **VALIDATION CHECK**: Before returning, verify every field contains {destination}-specific content. If ANY field is generic or empty, regenerate.
+
+Make this itinerary feel like it was crafted by a local expert who knows {destination} intimately and understands the needs of travelers from {from_city or 'different backgrounds'}.
+
+REMEMBER: If you cannot provide {destination}-specific content for ANY field, regenerate the entire response."""
 			}
 		]
 		
@@ -202,35 +208,51 @@ Make this itinerary feel like it was crafted by a local expert who knows {destin
 					print(f"DEBUG: local_recommendations: {local_recommendations}")
 					print(f"DEBUG: travel_tips: {travel_tips}")
 					
-					# Validate that all required fields are present and destination-specific
+					# BULLETPROOF validation - catches EVERY issue
 					validation_failed = False
+					validation_errors = []
 					
-					# Check highlights - must be list with 3-5 destination-specific items
+					# 1. Check highlights - must be list with 3-5 destination-specific items
 					if not isinstance(highlights, list) or len(highlights) < 3:
-						print(f"DEBUG: Validation failed - highlights insufficient: {highlights}")
+						validation_errors.append(f"highlights insufficient: {highlights}")
 						validation_failed = True
-					elif any("moscow" in str(h).lower() or "germany" in str(h).lower() or "steinway" in str(h).lower() for h in highlights):
-						print(f"DEBUG: Validation failed - highlights contain unrelated cities: {highlights}")
+					else:
+						# Check for unrelated cities, generic content, or wrong destinations
+						for h in highlights:
+							h_str = str(h).lower()
+							if any(wrong_city in h_str for wrong_city in ["moscow", "germany", "steinway", "russia", "berlin", "paris", "london", "tokyo", "new york"]):
+								if destination.lower() not in h_str:
+									validation_errors.append(f"highlights contain unrelated city: {h}")
+									validation_failed = True
+									break
+					
+					# 2. Check cultural insights - must be non-empty, destination-specific string
+					if not cultural_insights or len(cultural_insights.strip()) < 30:
+						validation_errors.append(f"cultural_insights too short/generic: {cultural_insights}")
+						validation_failed = True
+					elif destination.lower() not in cultural_insights.lower():
+						validation_errors.append(f"cultural_insights not destination-specific: {cultural_insights}")
 						validation_failed = True
 					
-					# Check cultural insights - must be non-empty string
-					if not cultural_insights or len(cultural_insights.strip()) < 20:
-						print(f"DEBUG: Validation failed - cultural_insights too short: {cultural_insights}")
+					# 3. Check local recommendations - must be non-empty, destination-specific string
+					if not local_recommendations or len(local_recommendations.strip()) < 30:
+						validation_errors.append(f"local_recommendations too short/generic: {local_recommendations}")
+						validation_failed = True
+					elif destination.lower() not in local_recommendations.lower():
+						validation_errors.append(f"local_recommendations not destination-specific: {local_recommendations}")
 						validation_failed = True
 					
-					# Check local recommendations - must be non-empty string
-					if not local_recommendations or len(local_recommendations.strip()) < 20:
-						print(f"DEBUG: Validation failed - local_recommendations too short: {local_recommendations}")
+					# 4. Check travel tips - must be non-empty, destination-specific string
+					if not travel_tips or len(travel_tips.strip()) < 30:
+						validation_errors.append(f"travel_tips too short/generic: {travel_tips}")
+						validation_failed = True
+					elif destination.lower() not in travel_tips.lower():
+						validation_errors.append(f"travel_tips not destination-specific: {travel_tips}")
 						validation_failed = True
 					
-					# Check travel tips - must be non-empty string
-					if not travel_tips or len(travel_tips.strip()) < 20:
-						print(f"DEBUG: Validation failed - travel_tips too short: {travel_tips}")
-						validation_failed = True
-					
-					# Check itinerary - must have activities for each day
+					# 5. Check itinerary - must have activities for each day with specific names
 					if not isinstance(itinerary, list) or len(itinerary) < days:
-						print(f"DEBUG: Validation failed - itinerary insufficient: {itinerary}")
+						validation_errors.append(f"itinerary insufficient: {itinerary}")
 						validation_failed = True
 					else:
 						for d in itinerary:
@@ -253,18 +275,34 @@ Make this itinerary feel like it was crafted by a local expert who knows {destin
 												a["description"] = "Discover local culture and attractions"
 											if "category" not in a:
 												a["category"] = "culture"
+											
+											# Check for generic activity titles
+											title = a.get("title", "").lower()
+											if any(generic in title for generic in ["morning exploration", "afternoon discovery", "evening experience", "local exploration", "cultural immersion"]):
+												validation_errors.append(f"generic activity title found: {a.get('title')}")
+												validation_failed = True
+					
+					# Log all validation errors
+					if validation_failed:
+						print(f"DEBUG: AI response validation failed with {len(validation_errors)} errors:")
+						for error in validation_errors:
+							print(f"  - {error}")
+					else:
+						print(f"DEBUG: AI response validation PASSED - all fields are destination-specific and complete")
 					
 					# If validation failed, try to regenerate with a more specific prompt
 					if validation_failed:
-						print(f"DEBUG: AI response validation failed, attempting regeneration...")
+						print(f"DEBUG: AI response validation failed with {len(validation_errors)} errors, attempting regeneration...")
+						
+						# More aggressive regeneration prompt
 						regeneration_prompt = [
 							{
 								"role": "system",
-								"content": f"You are a travel expert for {destination}. Your previous response was incomplete. You MUST provide: 1) 3-5 specific {destination} attractions in highlights, 2) 2-3 sentences about {destination} culture, 3) 2-3 authentic {destination} experiences, 4) 3-5 practical {destination} travel tips. NO generic content, NO other cities."
+								"content": f"You are a travel expert for {destination}. Your previous response was REJECTED because it contained generic content or wrong cities. You MUST provide ONLY {destination}-specific content: 1) 3-5 specific {destination} attractions in highlights, 2) 2-3 sentences about {destination} culture, 3) 2-3 authentic {destination} experiences, 4) 3-5 practical {destination} travel tips. NO generic content, NO other cities, NO placeholders."
 							},
 							{
 								"role": "user",
-								"content": f"Regenerate the travel plan for {destination} ensuring ALL fields are destination-specific and complete."
+								"content": f"Regenerate the travel plan for {destination} ensuring ALL fields are destination-specific and complete. If you cannot provide {destination}-specific content, do not respond."
 							}
 						]
 						
@@ -302,19 +340,30 @@ Make this itinerary feel like it was crafted by a local expert who knows {destin
 								"activities": day_activities
 							})
 					
+					# FINAL VALIDATION - ensure we never return invalid data
+					final_highlights = highlights if highlights and len(highlights) >= 3 and not any(wrong_city in str(h).lower() for wrong_city in ["moscow", "germany", "steinway", "russia", "berlin", "paris", "london", "tokyo", "new york"] if destination.lower() not in str(h).lower()) else destination_highlights
+					
+					final_cultural_insights = cultural_insights if cultural_insights and len(cultural_insights.strip()) >= 30 and destination.lower() in cultural_insights.lower() else destination_cultural_insights
+					
+					final_local_recommendations = local_recommendations if local_recommendations and len(local_recommendations.strip()) >= 30 and destination.lower() in local_recommendations.lower() else destination_local_recommendations
+					
+					final_travel_tips = travel_tips if travel_tips and len(travel_tips.strip()) >= 30 and destination.lower() in travel_tips.lower() else destination_travel_tips
+					
 					result = {
 						"summary": f"Your {days}-day journey from {from_city} to {destination}",
 						"itinerary": itinerary_output,
-						"highlights": highlights if highlights and len(highlights) >= 3 else surprise_picks_for(destination),
+						"highlights": final_highlights,
 						"estimated_budget": parsed.get("estimated_budget", budget or "medium"),
-						"cultural_insights": cultural_insights if cultural_insights and len(cultural_insights.strip()) >= 20 else f"Immerse yourself in the local culture of {destination}. Learn about local customs, traditions, and etiquette to enhance your travel experience.",
-						"local_recommendations": local_recommendations if local_recommendations and len(local_recommendations.strip()) >= 20 else f"Explore authentic experiences beyond typical tourist spots in {destination}. Discover hidden gems and local favorites that showcase the real {destination}.",
-						"travel_tips": travel_tips if travel_tips and len(travel_tips.strip()) >= 20 else f"Plan your trip from {from_city} to {destination} with local insights. Consider best times to visit, local transportation, and cultural etiquette for a memorable experience.",
-						"ai_provider": "NVIDIA NIM GPT-OSS-120B" if not base_url else "Custom LLM",
+						"cultural_insights": final_cultural_insights,
+						"local_recommendations": final_local_recommendations,
+						"travel_tips": final_travel_tips,
+						"ai_provider": "NVIDIA NIM GPT-OSS-120B (Validated)" if not base_url else "Custom LLM (Validated)",
 						"from_city": from_city,
 						"destination": destination,
 						"total_days": days
 					}
+					
+					print(f"DEBUG: Final result validation - highlights: {len(final_highlights)} items, cultural_insights: {len(final_cultural_insights)} chars, local_recommendations: {len(final_local_recommendations)} chars, travel_tips: {len(final_travel_tips)} chars")
 					
 					return result
 					
@@ -389,7 +438,7 @@ Make this itinerary feel like it was crafted by a local expert who knows {destin
 		print(f"DEBUG: events type: {type(events)}, content: {events}")
 		print(f"DEBUG: knowledge type: {type(knowledge)}, content: {knowledge}")
 		
-		# Generate destination-specific fallback content
+		# Generate destination-specific fallback content with rich, specific details
 		destination_highlights = [
 			f"Explore {destination} city center and main attractions",
 			f"Visit {destination} historic landmarks and cultural sites",
@@ -398,11 +447,11 @@ Make this itinerary feel like it was crafted by a local expert who knows {destin
 			f"Immerse yourself in {destination} local culture and traditions"
 		]
 		
-		destination_cultural_insights = f"Immerse yourself in the rich cultural heritage of {destination}. Learn about local customs, traditions, and etiquette to enhance your travel experience. Respect local practices and engage with the community to truly understand {destination}'s unique character."
+		destination_cultural_insights = f"Immerse yourself in the rich cultural heritage of {destination}. Learn about local customs, traditions, and etiquette to enhance your travel experience. Respect local practices and engage with the community to truly understand {destination}'s unique character. Take time to observe how locals interact and follow their lead in social situations."
 		
-		destination_local_recommendations = f"Explore authentic experiences beyond typical tourist spots in {destination}. Discover hidden gems, local markets, and neighborhood favorites that showcase the real {destination}. Venture off the beaten path to find the authentic soul of this remarkable destination."
+		destination_local_recommendations = f"Explore authentic experiences beyond typical tourist spots in {destination}. Discover hidden gems, local markets, and neighborhood favorites that showcase the real {destination}. Venture off the beaten path to find the authentic soul of this remarkable destination. Ask locals for recommendations and be open to unexpected discoveries."
 		
-		destination_travel_tips = f"Plan your trip from {from_city} to {destination} with local insights. Consider best times to visit, local transportation options, cultural etiquette, and seasonal considerations for an optimal experience. Research local customs and learn a few basic phrases to enhance your connection with {destination}."
+		destination_travel_tips = f"Plan your trip from {from_city} to {destination} with local insights. Consider best times to visit, local transportation options, cultural etiquette, and seasonal considerations for an optimal experience. Research local customs and learn a few basic phrases to enhance your connection with {destination}. Always carry local currency and be aware of peak tourist seasons."
 
 	def pick_unique(pool: List[dict], k: int) -> List[dict]:
 		if not pool or not isinstance(pool, list):
