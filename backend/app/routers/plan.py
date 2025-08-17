@@ -52,13 +52,13 @@ async def plan_travel(request: TravelPlanRequest):
         
         # Extract the structured data from the AI response
         try:
-            if isinstance(itinerary_data, dict) and "day_plans" in itinerary_data:
-                # AI response is properly structured
-                summary = f"Your {days}-day journey from {request.from_city} to {request.destination}"
-                itinerary = itinerary_data.get("day_plans", [])
+            if isinstance(itinerary_data, dict) and "itinerary" in itinerary_data:
+                # AI response is properly structured with new schema
+                summary = itinerary_data.get("summary", f"Your {days}-day journey from {request.from_city} to {request.destination}")
+                itinerary = itinerary_data.get("itinerary", [])
                 
                 # Safely extract highlights - ensure it's a list
-                highlights_raw = itinerary_data.get("surprise_picks", [])
+                highlights_raw = itinerary_data.get("highlights", [])
                 if isinstance(highlights_raw, list):
                     highlights = highlights_raw
                 else:
@@ -70,9 +70,13 @@ async def plan_travel(request: TravelPlanRequest):
                 travel_tips = itinerary_data.get("travel_tips", f"Plan your trip from {request.from_city} to {request.destination} with local insights.")
                 ai_provider = itinerary_data.get("ai_provider", "NVIDIA GPT-OSS-120B")
             else:
-                # Fallback to basic structure
+                # Fallback to basic structure - match the frontend interface
                 summary = f"Your {days}-day journey from {request.from_city} to {request.destination}"
-                itinerary = [{"day": i+1, "summary": f"Day {i+1} in {request.destination}", "activities": []} for i in range(days)]
+                itinerary = [{"day": i+1, "summary": f"Day {i+1} in {request.destination}", "activities": [
+                    {"time": "09:00", "title": "Morning Exploration", "description": "Begin your day discovering local culture", "category": "culture"},
+                    {"time": "14:00", "title": "Afternoon Discovery", "description": "Explore local attractions and hidden gems", "category": "exploration"},
+                    {"time": "19:00", "title": "Evening Experience", "description": "Enjoy local evening culture and entertainment", "category": "evening"}
+                ]} for i in range(days)]
                 highlights = [f"Explore {request.destination}", f"Experience local culture", f"Discover hidden gems"]
                 estimated_budget = request.budget
                 cultural_insights = "Immerse yourself in local culture and traditions."
@@ -81,9 +85,13 @@ async def plan_travel(request: TravelPlanRequest):
                 ai_provider = "Knowledge-based fallback"
         except Exception as e:
             print(f"DEBUG: Error processing itinerary_data: {e}")
-            # Fallback to basic structure on any error
+            # Fallback to basic structure on any error - match the frontend interface
             summary = f"Your {days}-day journey from {request.from_city} to {request.destination}"
-            itinerary = [{"day": i+1, "summary": f"Day {i+1} in {request.destination}", "activities": []} for i in range(days)]
+            itinerary = [{"day": i+1, "summary": f"Day {i+1} in {request.destination}", "activities": [
+                {"time": "09:00", "title": "Morning Exploration", "description": "Begin your day discovering local culture", "category": "culture"},
+                {"time": "14:00", "title": "Afternoon Discovery", "description": "Explore local attractions and hidden gems", "category": "exploration"},
+                {"time": "19:00", "title": "Evening Experience", "description": "Enjoy local evening culture and entertainment", "category": "evening"}
+            ]} for i in range(days)]
             highlights = [f"Explore {request.destination}", f"Experience local culture", f"Discover hidden gems"]
             estimated_budget = request.budget
             cultural_insights = "Immerse yourself in local culture and traditions."

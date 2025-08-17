@@ -65,6 +65,15 @@ function ResultsPageContent() {
         if (storedPlan) {
           try {
             const parsedPlan = JSON.parse(storedPlan);
+            console.log('🔍 DEBUG: Parsed travel plan from localStorage:', parsedPlan);
+            console.log('🔍 DEBUG: Plan structure:', {
+              summary: parsedPlan.summary,
+              itinerary: parsedPlan.itinerary,
+              highlights: parsedPlan.highlights,
+              cultural_insights: parsedPlan.cultural_insights,
+              local_recommendations: parsedPlan.local_recommendations,
+              travel_tips: parsedPlan.travel_tips
+            });
             setTravelPlan(parsedPlan);
             setLoading(false);
             return;
@@ -188,49 +197,61 @@ function ResultsPageContent() {
             >
               <h2 className="text-2xl font-semibold text-foreground mb-6">Your Daily Itinerary</h2>
               
-              {travelPlan.itinerary.map((day, index) => (
-                <motion.div
-                  key={day.day}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
-                  className="mb-6"
-                >
-                  <Card className="border-0 shadow-lg">
-                    <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-900/20 dark:to-teal-900/20">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                          {day.day}
-                        </div>
-                        <div>
-                          <CardTitle className="text-xl">Day {day.day}</CardTitle>
-                          <CardDescription className="text-base">{day.summary}</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-6">
-                      <div className="space-y-4">
-                        {day.activities.map((activity, actIndex) => (
-                          <div key={actIndex} className="flex gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                            <div className="text-sm font-mono text-blue-600 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">
-                              {activity.time}
-                            </div>
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-foreground mb-1">{activity.title}</h4>
-                              <p className="text-muted-foreground text-sm leading-relaxed">{activity.description}</p>
-                              {activity.category && (
-                                <span className="inline-block mt-2 text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded">
-                                  {activity.category}
-                                </span>
-                              )}
-                            </div>
+              {travelPlan.itinerary.map((day, index) => {
+                console.log(`🔍 DEBUG: Rendering day ${day.day}:`, day);
+                return (
+                  <motion.div
+                    key={day.day}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
+                    className="mb-6"
+                  >
+                    <Card className="border-0 shadow-lg">
+                      <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-900/20 dark:to-teal-900/20">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                            {day.day}
                           </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
+                          <div>
+                            <CardTitle className="text-xl">Day {day.day}</CardTitle>
+                            <CardDescription className="text-base">{day.summary}</CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-6">
+                        <div className="space-y-4">
+                          {day.activities && day.activities.length > 0 ? (
+                            day.activities.map((activity, actIndex) => {
+                              console.log(`🔍 DEBUG: Rendering activity ${actIndex}:`, activity);
+                              return (
+                                <div key={actIndex} className="flex gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                                  <div className="text-sm font-mono text-blue-600 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">
+                                    {activity.time}
+                                  </div>
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-foreground mb-1">{activity.title}</h4>
+                                    <p className="text-muted-foreground text-sm leading-relaxed">{activity.description}</p>
+                                    {activity.category && (
+                                      <span className="inline-block mt-2 text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded">
+                                        {activity.category}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <div className="text-center py-8 text-muted-foreground">
+                              <p>No activities planned for this day yet.</p>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
             </motion.div>
           </div>
 
@@ -250,14 +271,25 @@ function ResultsPageContent() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-3">
-                    {travelPlan.highlights.map((highlight, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <span className="text-sm text-muted-foreground">{highlight}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {(() => {
+                    console.log('🔍 DEBUG: Rendering highlights:', travelPlan.highlights);
+                    return (
+                      <ul className="space-y-3">
+                        {travelPlan.highlights && travelPlan.highlights.length > 0 ? (
+                          travelPlan.highlights.map((highlight, index) => (
+                            <li key={index} className="flex items-start gap-3">
+                              <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+                              <span className="text-sm text-muted-foreground">{highlight}</span>
+                            </li>
+                          ))
+                        ) : (
+                          <li className="text-center py-4 text-muted-foreground">
+                            <p>No highlights available yet.</p>
+                          </li>
+                        )}
+                      </ul>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             </motion.div>
@@ -276,7 +308,14 @@ function ResultsPageContent() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{travelPlan.cultural_insights}</p>
+                  {(() => {
+                    console.log('🔍 DEBUG: Rendering cultural insights:', travelPlan.cultural_insights);
+                    return (
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {travelPlan.cultural_insights || 'No cultural insights available yet.'}
+                      </p>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             </motion.div>
@@ -295,7 +334,14 @@ function ResultsPageContent() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{travelPlan.local_recommendations}</p>
+                  {(() => {
+                    console.log('🔍 DEBUG: Rendering local recommendations:', travelPlan.local_recommendations);
+                    return (
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {travelPlan.local_recommendations || 'No local recommendations available yet.'}
+                      </p>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             </motion.div>
@@ -314,7 +360,14 @@ function ResultsPageContent() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{travelPlan.travel_tips}</p>
+                  {(() => {
+                    console.log('🔍 DEBUG: Rendering travel tips:', travelPlan.travel_tips);
+                    return (
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {travelPlan.travel_tips || 'No travel tips available yet.'}
+                      </p>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             </motion.div>
