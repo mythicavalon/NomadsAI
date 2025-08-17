@@ -16,9 +16,9 @@ redis==5.1.1
 pandas==2.2.3
 numpy==1.26.4
 
-# Pipeline dependencies
+# Pipeline dependencies (lightweight)
 jsonschema>=4.0.0
-sentence-transformers>=2.2.0
+# sentence-transformers>=2.2.0  # Commented out for quick deployment
 
 # Additional utilities
 python-multipart==0.0.12

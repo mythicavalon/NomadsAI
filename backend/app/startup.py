@@ -4,36 +4,23 @@ Startup script to initialize pipeline components when FastAPI starts.
 
 import logging
 from pathlib import Path
-from .pipeline import DataRetriever, DataIngester
+from .pipeline import generate_itinerary_pipeline
 
 logger = logging.getLogger(__name__)
 
 async def initialize_pipeline():
     """Initialize the pipeline components on startup."""
     try:
-        logger.info("🚀 Initializing Two-Stage Itinerary Pipeline...")
+        logger.info("🚀 Initializing Standalone Lightweight Pipeline...")
         
-        # Initialize data retriever
-        retriever = DataRetriever()
-        logger.info("✅ Data retriever initialized")
+        # Test the pipeline to ensure it's working
+        test_result = generate_itinerary_pipeline("London", 1, "New York", "medium", ["culture"])
         
-        # Initialize data ingester
-        ingester = DataIngester(retriever)
-        logger.info("✅ Data ingester initialized")
-        
-        # Pre-load knowledge for common destinations
-        common_destinations = ["london", "paris", "tokyo", "new york", "rome", "barcelona", "amsterdam", "berlin"]
-        logger.info(f"📚 Pre-loading knowledge for {len(common_destinations)} destinations...")
-        
-        for destination in common_destinations:
-            try:
-                success = ingester.ingest_wikivoyage_data(destination)
-                if success:
-                    logger.info(f"  ✅ {destination.title()}: Knowledge loaded")
-                else:
-                    logger.warning(f"  ⚠️ {destination.title()}: Knowledge loading failed")
-            except Exception as e:
-                logger.warning(f"  ⚠️ {destination.title()}: Error during loading - {e}")
+        if test_result and "itinerary" in test_result:
+            logger.info("✅ Standalone pipeline initialized successfully")
+            logger.info(f"✅ Test itinerary generated: {len(test_result.get('itinerary', []))} days")
+        else:
+            logger.warning("⚠️ Pipeline test generated incomplete result")
         
         logger.info("🎉 Pipeline initialization completed successfully!")
         return True
@@ -45,20 +32,34 @@ async def initialize_pipeline():
 def get_pipeline_status():
     """Get the current status of the pipeline."""
     try:
-        retriever = DataRetriever()
-        return {
-            "status": "operational",
-            "components": {
-                "data_retriever": "ready",
-                "data_ingester": "ready"
+        # Test the pipeline
+        test_result = generate_itinerary_pipeline("Paris", 1, "London", "medium", ["food"])
+        
+        if test_result and "itinerary" in test_result:
+            return {
+                "status": "operational",
+                "components": {
+                    "standalone_pipeline": "ready",
+                    "knowledge_base": "ready"
+                },
+                "test_result": "success"
             }
-        }
+        else:
+            return {
+                "status": "warning",
+                "components": {
+                    "standalone_pipeline": "partial",
+                    "knowledge_base": "unknown"
+                },
+                "test_result": "incomplete"
+            }
     except Exception as e:
         return {
             "status": "error",
             "error": str(e),
             "components": {
-                "data_retriever": "unknown",
-                "data_ingester": "unknown"
-            }
+                "standalone_pipeline": "unknown",
+                "knowledge_base": "unknown"
+            },
+            "test_result": "failed"
         }
