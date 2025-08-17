@@ -23,7 +23,15 @@ def canonicalize_city(name: str) -> str:
 def load_city_knowledge(city: str) -> Dict[str, Any] | None:
 	canon = canonicalize_city(city)
 	path = os.path.join(_KNOWLEDGE_DIR, f"{canon}.json")
+	
+	# Debug logging
+	print(f"DEBUG: load_city_knowledge - city: {city}, canon: {canon}, path: {path}")
+	
 	if not os.path.exists(path):
+		print(f"DEBUG: load_city_knowledge - path does not exist: {path}")
 		return None
+	
 	with open(path, "r", encoding="utf-8") as f:
-		return json.load(f)
+		data = json.load(f)
+		print(f"DEBUG: load_city_knowledge - loaded data type: {type(data)}, content: {data}")
+		return data

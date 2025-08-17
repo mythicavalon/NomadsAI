@@ -14,4 +14,13 @@ def _load(filename: str) -> List[Dict]:
 def load_events_for_city(city: str) -> List[Dict]:
 	city_lower = city.lower()
 	events = _load("events.json")
-	return [e for e in events if city_lower in e.get("location", "").lower()]
+	
+	# Debug logging
+	print(f"DEBUG: load_events_for_city - city: {city}, events type: {type(events)}")
+	print(f"DEBUG: load_events_for_city - events content: {events}")
+	
+	# Safely filter events, ensuring each event is a dictionary
+	filtered_events = [e for e in events if isinstance(e, dict) and city_lower in e.get("location", "").lower()]
+	
+	print(f"DEBUG: load_events_for_city - filtered events: {filtered_events}")
+	return filtered_events
