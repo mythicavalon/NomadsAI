@@ -273,7 +273,7 @@ Make this itinerary feel like it was crafted by a local expert who knows the des
 		"days": days,
 		"currency": "USD",
 		"estimated_budget": budget or "medium",
-		"day_plans": [dp.dict() for dp in day_plans],
+		"day_plans": [dp.model_dump() if hasattr(dp, 'model_dump') else dp.dict() for dp in day_plans],
 		"surprise_picks": surprise_picks_for(destination),
 		"ai_enhanced": False,
 		"ai_provider": "Knowledge-based fallback",

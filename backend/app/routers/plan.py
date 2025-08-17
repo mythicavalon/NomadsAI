@@ -46,19 +46,42 @@ async def plan_travel(request: TravelPlanRequest):
             travelers=request.travelers
         )
         
+        # Debug logging
+        print(f"DEBUG: itinerary_data type: {type(itinerary_data)}")
+        print(f"DEBUG: itinerary_data content: {itinerary_data}")
+        
         # Extract the structured data from the AI response
-        if isinstance(itinerary_data, dict) and "day_plans" in itinerary_data:
-            # AI response is properly structured
-            summary = f"Your {days}-day journey from {request.from_city} to {request.destination}"
-            itinerary = itinerary_data.get("day_plans", [])
-            highlights = itinerary_data.get("surprise_picks", [])
-            estimated_budget = itinerary_data.get("estimated_budget", request.budget)
-            cultural_insights = itinerary_data.get("cultural_insights", "Immerse yourself in local culture and traditions.")
-            local_recommendations = itinerary_data.get("local_recommendations", "Explore authentic local experiences beyond tourist spots.")
-            travel_tips = itinerary_data.get("travel_tips", f"Plan your trip from {request.from_city} to {request.destination} with local insights.")
-            ai_provider = "NVIDIA GPT-OSS-120B"
-        else:
-            # Fallback to basic structure
+        try:
+            if isinstance(itinerary_data, dict) and "day_plans" in itinerary_data:
+                # AI response is properly structured
+                summary = f"Your {days}-day journey from {request.from_city} to {request.destination}"
+                itinerary = itinerary_data.get("day_plans", [])
+                
+                # Safely extract highlights - ensure it's a list
+                highlights_raw = itinerary_data.get("surprise_picks", [])
+                if isinstance(highlights_raw, list):
+                    highlights = highlights_raw
+                else:
+                    highlights = [f"Explore {request.destination}", f"Experience local culture", f"Discover hidden gems"]
+                
+                estimated_budget = itinerary_data.get("estimated_budget", request.budget)
+                cultural_insights = itinerary_data.get("cultural_insights", "Immerse yourself in local culture and traditions.")
+                local_recommendations = itinerary_data.get("local_recommendations", "Explore authentic local experiences beyond tourist spots.")
+                travel_tips = itinerary_data.get("travel_tips", f"Plan your trip from {request.from_city} to {request.destination} with local insights.")
+                ai_provider = itinerary_data.get("ai_provider", "NVIDIA GPT-OSS-120B")
+            else:
+                # Fallback to basic structure
+                summary = f"Your {days}-day journey from {request.from_city} to {request.destination}"
+                itinerary = [{"day": i+1, "summary": f"Day {i+1} in {request.destination}", "activities": []} for i in range(days)]
+                highlights = [f"Explore {request.destination}", f"Experience local culture", f"Discover hidden gems"]
+                estimated_budget = request.budget
+                cultural_insights = "Immerse yourself in local culture and traditions."
+                local_recommendations = "Explore authentic local experiences beyond tourist spots."
+                travel_tips = f"Plan your trip from {request.from_city} to {request.destination} with local insights."
+                ai_provider = "Knowledge-based fallback"
+        except Exception as e:
+            print(f"DEBUG: Error processing itinerary_data: {e}")
+            # Fallback to basic structure on any error
             summary = f"Your {days}-day journey from {request.from_city} to {request.destination}"
             itinerary = [{"day": i+1, "summary": f"Day {i+1} in {request.destination}", "activities": []} for i in range(days)]
             highlights = [f"Explore {request.destination}", f"Experience local culture", f"Discover hidden gems"]
