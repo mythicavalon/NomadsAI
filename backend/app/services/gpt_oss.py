@@ -156,26 +156,34 @@ Make this itinerary feel like it was crafted by a local expert who knows the des
 				import json as _json
 				try:
 					parsed = _json.loads(resp[start:end+1])
+					print(f"DEBUG: Parsed AI response type: {type(parsed)}")
+					print(f"DEBUG: Parsed AI response content: {parsed}")
 					
 					# Enhanced validation and processing
 					day_plans = parsed.get("day_plans", [])
-					for d in day_plans:
-						# Ensure required fields exist
-						if "day" not in d:
-							d["day"] = 1
-						if "summary" not in d:
-							d["summary"] = f"Day {d.get('day', 1)} exploration"
-						
-						activities = d.get("activities", [])
-						for a in activities:
-							if "time" not in a: 
-								a["time"] = "09:00"
-							if "title" not in a:
-								a["title"] = "Local exploration"
-							if "description" not in a:
-								a["description"] = "Discover local culture and attractions"
-							if "category" not in a:
-								a["category"] = "culture"
+					print(f"DEBUG: day_plans type: {type(day_plans)}")
+					print(f"DEBUG: day_plans content: {day_plans}")
+					if isinstance(day_plans, list):
+						for d in day_plans:
+							if isinstance(d, dict):
+								# Ensure required fields exist
+								if "day" not in d:
+									d["day"] = 1
+								if "summary" not in d:
+									d["summary"] = f"Day {d.get('day', 1)} exploration"
+								
+								activities = d.get("activities", [])
+								if isinstance(activities, list):
+									for a in activities:
+										if isinstance(a, dict):
+											if "time" not in a: 
+												a["time"] = "09:00"
+											if "title" not in a:
+												a["title"] = "Local exploration"
+											if "description" not in a:
+												a["description"] = "Discover local culture and attractions"
+											if "category" not in a:
+												a["category"] = "culture"
 					
 					# Enhanced response with additional AI-generated insights
 					result = {
