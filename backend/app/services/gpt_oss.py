@@ -98,25 +98,29 @@ Your task is to create a sophisticated, personalized travel itinerary that balan
 
 Output a JSON with the following structure:
 {
-  "day_plans": [
+  "summary": "Concise overview of the entire journey",
+  "itinerary": [
     {
       "day": 1,
       "summary": "Brief theme/overview of the day",
       "activities": [
         {
           "time": "09:00",
-          "title": "Activity name",
-          "description": "Detailed description with cultural context and practical tips",
+          "title": "Specific activity name (e.g., 'Visit the British Museum')",
+          "description": "Detailed description with cultural context and practical tips (1-2 sentences)",
           "category": "culture/food/adventure/relaxation/shopping"
         }
       ]
     }
   ],
+  "highlights": ["3-5 must-see attractions or experiences"],
   "estimated_budget": "budget level with reasoning",
   "cultural_insights": "2-3 key cultural tips for this destination",
   "local_recommendations": "2-3 authentic local experiences beyond typical tourist spots",
   "travel_tips": "Practical advice for travelers from [FROM_CITY] visiting [DESTINATION]"
 }
+
+IMPORTANT: Each day must have exactly 3 activities with specific, real names (not generic terms like 'Morning Exploration'). Activities should be destination-specific and draw from the available attractions and local knowledge.
 
 Keep descriptions engaging and informative. Consider local customs, best times to visit attractions, and practical travel tips."""
 			},
@@ -141,6 +145,13 @@ Please create a sophisticated itinerary that includes:
 
 Available attractions and context:
 {bullets_text}
+
+CRITICAL REQUIREMENTS:
+1. Each day must have exactly 3 activities with REAL, SPECIFIC names
+2. NO generic terms like "Morning Exploration", "Afternoon Discovery", or "Evening Experience"
+3. Use actual attraction names from the available context when possible
+4. Activities should be varied across days (don't repeat the same 3 activities)
+5. Include specific times, realistic durations, and practical details
 
 Make this itinerary feel like it was crafted by a local expert who knows the destination intimately and understands the needs of travelers from {from_city or 'different backgrounds'}."""
 			}
@@ -223,6 +234,59 @@ Make this itinerary feel like it was crafted by a local expert who knows the des
 					pass
 		except Exception as e:
 			print(f"AI itinerary generation failed: {e}")
+			# Try one more time with a simplified prompt
+			try:
+				print("Retrying AI generation with simplified prompt...")
+				simple_prompt = [
+					{
+						"role": "system",
+						"content": "You are a travel expert. Create a JSON itinerary with this exact structure: {\"summary\": \"journey overview\", \"itinerary\": [{\"day\": 1, \"summary\": \"day overview\", \"activities\": [{\"time\": \"09:00\", \"title\": \"specific activity name\", \"description\": \"activity description\"}]}], \"highlights\": [\"attraction 1\", \"attraction 2\"], \"estimated_budget\": \"budget level\", \"cultural_insights\": \"cultural tips\", \"local_recommendations\": \"local experiences\", \"travel_tips\": \"travel advice\"}"
+					},
+					{
+						"role": "user",
+						"content": f"Create a {days}-day itinerary for {destination} with 3 specific activities per day. Use real attraction names, not generic terms."
+					}
+				]
+				
+				resp = llm_chat(simple_prompt, base_url=base_url, api_key=api_key, model=model)
+				start = resp.find('{')
+				end = resp.rfind('}')
+				if start != -1 and end != -1:
+					parsed = json.loads(resp[start:end+1])
+					if isinstance(parsed, dict) and "itinerary" in parsed:
+						# Process the retry response
+						itinerary = []
+						for d in parsed.get("itinerary", []):
+							if isinstance(d, dict):
+								activities = d.get("activities", [])
+								day_activities = []
+								for a in activities:
+									if isinstance(a, dict):
+										day_activities.append(f"{a.get('time', '')}: {a.get('title', '')}")
+								
+								itinerary.append({
+									"day": d.get("day", 1),
+									"title": d.get("summary", f"Day {d.get('day', 1)}"),
+									"activities": day_activities
+								})
+						
+						result = {
+							"summary": parsed.get("summary", f"Your {days}-day journey to {destination}"),
+							"itinerary": itinerary,
+							"highlights": parsed.get("highlights", [f"Explore {destination}", f"Experience local culture"]),
+							"estimated_budget": parsed.get("estimated_budget", budget or "medium"),
+							"cultural_insights": parsed.get("cultural_insights", f"Immerse yourself in the local culture of {destination}"),
+							"local_recommendations": parsed.get("local_recommendations", f"Explore authentic experiences in {destination}"),
+							"travel_tips": parsed.get("travel_tips", f"Plan your trip to {destination} with local insights"),
+							"ai_provider": "NVIDIA NIM GPT-OSS-120B (Retry)" if not base_url else "Custom LLM (Retry)",
+							"from_city": from_city,
+							"destination": destination,
+							"total_days": days
+						}
+						return result
+			except Exception as retry_e:
+				print(f"AI retry also failed: {retry_e}")
+			
 			# Fall through to deterministic generation
 			pass
 
@@ -266,57 +330,81 @@ Make this itinerary feel like it was crafted by a local expert who knows the des
 	for day in range(1, days + 1):
 		activities = []
 		
-		# Morning activity (9:00 AM)
-		if available_events:
+		# Morning activity (9:00 AM) - Destination-specific
+		if available_events and len(available_events) > 0:
 			event = available_events[day % len(available_events)]
 			if isinstance(event, dict):
 				activities.append(GeneratedActivity(
 					time="09:00",
-					title=event.get("name", "Morning Activity"),
-					description=f"Start your day with {event.get('name', 'local culture')}",
+					title=f"Visit {event.get('name', f'{destination} Attraction')}",
+					description=f"Start your day exploring {event.get('name', f'local culture in {destination}')}",
 					category="culture"
 				))
 		else:
+			# Generate destination-specific morning activity
+			morning_activities = [
+				f"Explore {destination} city center",
+				f"Visit {destination} main square",
+				f"Discover {destination} historic district",
+				f"Walk through {destination} central park",
+				f"Tour {destination} old town"
+			]
 			activities.append(GeneratedActivity(
 				time="09:00",
-				title="Morning Exploration",
-				description="Begin your day discovering local culture and attractions",
+				title=morning_activities[day % len(morning_activities)],
+				description=f"Begin your day discovering the heart of {destination}",
 				category="culture"
 			))
 		
-		# Afternoon activity (2:00 PM)
-		if available_landmarks and day % 2 == 0:
+		# Afternoon activity (2:00 PM) - Destination-specific
+		if available_landmarks and len(available_landmarks) > 0:
 			landmark = available_landmarks[day % len(available_landmarks)]
 			if isinstance(landmark, dict):
 				activities.append(GeneratedActivity(
 					time="14:00",
-					title=f"Visit {landmark.get('name', 'Local Landmark')}",
-					description=landmark.get("description", "Explore this iconic destination"),
+					title=f"Visit {landmark.get('name', f'{destination} Landmark')}",
+					description=landmark.get("description", f"Explore this iconic destination in {destination}"),
 					category="sightseeing"
 				))
 		else:
+			# Generate destination-specific afternoon activity
+			afternoon_activities = [
+				f"Explore {destination} museums",
+				f"Visit {destination} cultural sites",
+				f"Discover {destination} hidden gems",
+				f"Tour {destination} famous landmarks",
+				f"Experience {destination} local markets"
+			]
 			activities.append(GeneratedActivity(
 				time="14:00",
-				title="Afternoon Discovery",
-				description="Explore local attractions and hidden gems",
-				category="exploration"
+				title=afternoon_activities[day % len(afternoon_activities)],
+				description=f"Immerse yourself in {destination}'s rich cultural heritage",
+				category="sightseeing"
 			))
 		
-		# Evening activity (7:00 PM)
-		if available_food and day % 3 == 0:
+		# Evening activity (7:00 PM) - Destination-specific
+		if available_food and len(available_food) > 0:
 			food_place = available_food[day % len(available_food)]
 			if isinstance(food_place, dict):
 				activities.append(GeneratedActivity(
 					time="19:00",
-					title=f"Dine at {food_place.get('name', 'Local Restaurant')}",
-					description=food_place.get("description", "Experience authentic local cuisine"),
+					title=f"Dine at {food_place.get('name', f'{destination} Restaurant')}",
+					description=food_place.get("description", f"Experience authentic {destination} cuisine"),
 					category="food"
 				))
 		else:
+			# Generate destination-specific evening activity
+			evening_activities = [
+				f"Experience {destination} nightlife",
+				f"Enjoy {destination} local cuisine",
+				f"Watch {destination} sunset views",
+				f"Explore {destination} evening markets",
+				f"Attend {destination} cultural events"
+			]
 			activities.append(GeneratedActivity(
 				time="19:00",
-				title="Evening Experience",
-				description="Enjoy local evening culture and entertainment",
+				title=evening_activities[day % len(evening_activities)],
+				description=f"End your day experiencing {destination}'s vibrant evening culture",
 				category="evening"
 			))
 		
