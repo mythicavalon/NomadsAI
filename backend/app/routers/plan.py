@@ -3,7 +3,7 @@ from typing import List
 from ..models import TravelPlanRequest, TravelPlanResponse
 from ..services.gpt_oss import generate_itinerary
 from ..pipeline import generate_itinerary_pipeline_enhanced, generate_itinerary_pipeline
-from ..services.llm_client import is_configured
+from ..services.llm_client import is_configured, NVIDIA_NIM_API_KEY
 import json
 import logging
 
@@ -40,59 +40,58 @@ async def plan_travel(request: TravelPlanRequest):
         if not request.interests:
             raise HTTPException(status_code=400, detail="At least one interest must be selected")
         
-        # Generate itinerary using GPT-OSS-120B AI first
+        # Generate itinerary - prioritize working standalone pipeline
         try:
-            logger.info(f"Using GPT-OSS-120B AI for {request.destination}")
-            itinerary_data = await generate_itinerary(
+            # First try GPT-OSS-120B AI if API key is configured
+            if NVIDIA_NIM_API_KEY:
+                logger.info(f"Using GPT-OSS-120B AI for {request.destination}")
+                itinerary_data = await generate_itinerary(
+                    destination=request.destination,
+                    days=days,
+                    budget=request.budget,
+                    interests=request.interests,
+                    travel_month=start_date.strftime("%B"),
+                    from_city=request.from_city,
+                    travelers=request.travelers
+                )
+                logger.info("GPT-OSS AI generation successful")
+            else:
+                raise Exception("NVIDIA API key not configured")
+        except Exception as ai_error:
+            logger.warning(f"GPT-OSS AI failed, using high-quality standalone pipeline: {ai_error}")
+            # Use the high-quality standalone pipeline (works great!)
+            itinerary_data = generate_itinerary_pipeline(
                 destination=request.destination,
                 days=days,
-                budget=request.budget,
-                interests=request.interests,
-                travel_month=start_date.strftime("%B"),
                 from_city=request.from_city,
-                travelers=request.travelers
+                budget=request.budget,
+                interests=request.interests
             )
-            logger.info("GPT-OSS AI generation successful")
-        except Exception as ai_error:
-            logger.warning(f"GPT-OSS AI failed, falling back to enhanced two-stage pipeline: {ai_error}")
-            # Fallback to enhanced two-stage pipeline (AI + Knowledge)
-            try:
-                itinerary_data = generate_itinerary_pipeline_enhanced(
-                    destination=request.destination,
-                    days=days,
-                    from_city=request.from_city,
-                    budget=request.budget,
-                    interests=request.interests
-                )
-                logger.info("Enhanced two-stage pipeline successful")
-            except Exception as pipeline_error:
-                logger.warning(f"Enhanced pipeline failed, using basic standalone: {pipeline_error}")
-                # Final fallback to basic standalone
-                itinerary_data = generate_itinerary_pipeline(
-                    destination=request.destination,
-                    days=days,
-                    from_city=request.from_city,
-                    budget=request.budget,
-                    interests=request.interests
-                )
+            logger.info("Standalone pipeline successful")
         
-        # Debug logging
-        print(f"DEBUG: itinerary_data type: {type(itinerary_data)}")
-        print(f"DEBUG: itinerary_data content: {itinerary_data}")
-        print(f"DEBUG: Checking for 'itinerary' key: {'itinerary' in itinerary_data if isinstance(itinerary_data, dict) else 'Not a dict'}")
-        print(f"DEBUG: Available keys: {list(itinerary_data.keys()) if isinstance(itinerary_data, dict) else 'Not a dict'}")
+        # Pipeline data successfully generated
         
         # Extract the structured data from the pipeline response
         try:
             if isinstance(itinerary_data, dict) and "itinerary" in itinerary_data:
                 # Pipeline response is properly structured with new schema
                 summary = itinerary_data.get("summary", f"Your {days}-day journey from {request.from_city} to {request.destination}")
-                itinerary = itinerary_data.get("itinerary", [])
+                raw_itinerary = itinerary_data.get("itinerary", [])
+                
+                # Transform pipeline structure to frontend-expected structure
+                itinerary = []
+                for day_data in raw_itinerary:
+                    transformed_day = {
+                        "day": day_data.get("day", 1),
+                        "title": day_data.get("theme", f"Day {day_data.get('day', 1)} in {request.destination}"),
+                        "activities": day_data.get("activities", [])
+                    }
+                    itinerary.append(transformed_day)
                 
                 # Extract highlights from the first day's highlights
                 highlights = []
-                if itinerary and len(itinerary) > 0:
-                    first_day = itinerary[0]
+                if raw_itinerary and len(raw_itinerary) > 0:
+                    first_day = raw_itinerary[0]
                     if "highlights" in first_day and isinstance(first_day["highlights"], list):
                         highlights = first_day["highlights"]
                 
@@ -101,8 +100,8 @@ async def plan_travel(request: TravelPlanRequest):
                 
                 # Extract cultural insights from the first day
                 cultural_insights = ""
-                if itinerary and len(itinerary) > 0:
-                    first_day = itinerary[0]
+                if raw_itinerary and len(raw_itinerary) > 0:
+                    first_day = raw_itinerary[0]
                     if "cultural_insight" in first_day:
                         insight_data = first_day["cultural_insight"]
                         # Defensive programming: ensure it's a string
@@ -116,8 +115,8 @@ async def plan_travel(request: TravelPlanRequest):
                 
                 # Extract local secrets from the first day
                 local_recommendations = ""
-                if itinerary and len(itinerary) > 0:
-                    first_day = itinerary[0]
+                if raw_itinerary and len(raw_itinerary) > 0:
+                    first_day = raw_itinerary[0]
                     if "local_secrets" in first_day:
                         secrets_data = first_day["local_secrets"]
                         # Defensive programming: ensure it's a string
@@ -131,8 +130,8 @@ async def plan_travel(request: TravelPlanRequest):
                 
                 # Extract travel tips from the first day
                 travel_tips = ""
-                if itinerary and len(itinerary) > 0:
-                    first_day = itinerary[0]
+                if raw_itinerary and len(raw_itinerary) > 0:
+                    first_day = raw_itinerary[0]
                     if "travel_tips" in first_day:
                         tips_data = first_day["travel_tips"]
                         # Defensive programming: ensure it's a string
@@ -170,7 +169,7 @@ async def plan_travel(request: TravelPlanRequest):
                 travel_tips = f"Plan your trip from {request.from_city} to {request.destination} with local insights."
                 ai_provider = "Knowledge-based fallback"
         except Exception as e:
-            print(f"DEBUG: Error processing itinerary_data: {e}")
+            logger.error(f"Error processing itinerary_data: {e}")
             # Fallback to basic structure on any error - match the frontend interface with destination-specific activities
             summary = f"Your {days}-day journey from {request.from_city} to {request.destination}"
             

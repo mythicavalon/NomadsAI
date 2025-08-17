@@ -9,7 +9,7 @@ import json
 
 # NVIDIA NIM Configuration
 NVIDIA_NIM_BASE_URL = "https://api.nvcf.nvidia.com/v1/chat/completions"
-NVIDIA_NIM_API_KEY = "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"
+NVIDIA_NIM_API_KEY = os.getenv("NVIDIA_API_KEY", "")
 NVIDIA_NIM_MODEL = "nvidia/gpt-oss-120b"
 
 # Fallback configuration

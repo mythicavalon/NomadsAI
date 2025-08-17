@@ -36,10 +36,8 @@ def create_app() -> FastAPI:
 	app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 	app.include_router(plan.router, prefix="/api/plan", tags=["plan"])
 
-	@app.on_event("startup")
-	async def startup_event():
-		"""Initialize pipeline components on startup."""
-		await initialize_pipeline()
+	# Removed startup pipeline test to prevent timeout issues
+	# Pipeline initializes on-demand when first used
 
 	@app.get("/healthz")
 	def healthcheck():
