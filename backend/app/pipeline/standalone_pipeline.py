@@ -259,13 +259,23 @@ class StandalonePipeline:
                 
                 # Enhance other fields
                 if "culture" in knowledge:
-                    day["cultural_insight"] = knowledge["culture"]
+                    # Ensure cultural_insight is a string, not a list
+                    culture_data = knowledge["culture"]
+                    if isinstance(culture_data, list) and culture_data:
+                        day["cultural_insight"] = culture_data[0]  # Use first item
+                    else:
+                        day["cultural_insight"] = str(culture_data)
                 
                 if "hidden_gems" in knowledge:
                     day["local_secrets"] = f"Discover hidden gems like {', '.join(knowledge['hidden_gems'][:2])}."
                 
                 if "practical_info" in knowledge:
-                    day["travel_tips"] = knowledge["practical_info"]
+                    # Ensure travel_tips is a string, not a list
+                    practical_data = knowledge["practical_info"]
+                    if isinstance(practical_data, list) and practical_data:
+                        day["travel_tips"] = practical_data[0]  # Use first item
+                    else:
+                        day["travel_tips"] = str(practical_data)
         
         return enriched
     
