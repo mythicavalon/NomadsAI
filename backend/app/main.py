@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
 
-from .routers import itineraries, signals, memory, digest, chat
+from .routers import itineraries, signals, memory, digest, chat, plan
 from .services.llm_client import get_ai_provider_info
 
 
@@ -33,6 +33,7 @@ def create_app() -> FastAPI:
 	app.include_router(memory.router, prefix="/api/memory", tags=["memory"])
 	app.include_router(digest.router, prefix="/api/digest", tags=["digest"])
 	app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
+	app.include_router(plan.router, prefix="/api/plan", tags=["plan"])
 
 	@app.get("/healthz")
 	def healthcheck():

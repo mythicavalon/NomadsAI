@@ -112,27 +112,42 @@ export default function HomePage() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/api/itineraries/plan`, {
+      // Prepare the travel plan data according to the backend schema
+      const travelPlanData = {
+        from_city: travelPlan.from,
+        destination: travelPlan.to,
+        departure_date: travelPlan.departureDate,
+        return_date: travelPlan.returnDate,
+        travelers: travelPlan.travelers,
+        budget: travelPlan.budget,
+        interests: travelPlan.interests
+      };
+
+      console.log('Submitting travel plan:', travelPlanData);
+
+      const response = await fetch(`${API_BASE}/api/plan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from_city: travelPlan.from,
-          destination: travelPlan.to,
-          days: Math.ceil((new Date(travelPlan.returnDate).getTime() - new Date(travelPlan.departureDate).getTime()) / (1000 * 60 * 60 * 24)),
-          budget: travelPlan.budget,
-          interests: travelPlan.interests,
-          travelers: travelPlan.travelers,
-          departure_date: travelPlan.departureDate,
-          return_date: travelPlan.returnDate
-        })
+        body: JSON.stringify(travelPlanData)
       });
       
       if (response.ok) {
-        // Handle success
-        console.log('Travel plan submitted successfully');
+        const data = await response.json();
+        console.log('Travel plan generated successfully:', data);
+        
+        // Store the travel plan data in localStorage for the results page
+        localStorage.setItem('travelPlanData', JSON.stringify(data));
+        
+        // Redirect to results page
+        window.location.href = '/results?id=generated';
+      } else {
+        const errorData = await response.json();
+        console.error('Backend error:', errorData);
+        alert(`Failed to generate travel plan: ${errorData.detail || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error submitting travel plan:', error);
+      alert('Failed to connect to the travel planning service. Please try again.');
     } finally {
       setLoading(false);
     }
