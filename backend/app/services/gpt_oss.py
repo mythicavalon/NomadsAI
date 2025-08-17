@@ -431,27 +431,27 @@ REMEMBER: If you cannot provide {destination}-specific content for ANY field, re
 
 	# Enhanced fallback: knowledge-driven deterministic plan with better structure
 	rng = random.Random(f"{from_city}:{destination}:{days}:{budget}:{','.join(interests)}:{travel_month}")
-		events = load_events_for_city(destination)
-		knowledge = load_city_knowledge(destination) or {}
-		
-		# Debug logging
-		print(f"DEBUG: events type: {type(events)}, content: {events}")
-		print(f"DEBUG: knowledge type: {type(knowledge)}, content: {knowledge}")
-		
-		# Generate destination-specific fallback content with rich, specific details
-		destination_highlights = [
-			f"Explore {destination} city center and main attractions",
-			f"Visit {destination} historic landmarks and cultural sites",
-			f"Discover {destination} hidden gems and local favorites",
-			f"Experience {destination} authentic cuisine and markets",
-			f"Immerse yourself in {destination} local culture and traditions"
-		]
-		
-		destination_cultural_insights = f"Immerse yourself in the rich cultural heritage of {destination}. Learn about local customs, traditions, and etiquette to enhance your travel experience. Respect local practices and engage with the community to truly understand {destination}'s unique character. Take time to observe how locals interact and follow their lead in social situations."
-		
-		destination_local_recommendations = f"Explore authentic experiences beyond typical tourist spots in {destination}. Discover hidden gems, local markets, and neighborhood favorites that showcase the real {destination}. Venture off the beaten path to find the authentic soul of this remarkable destination. Ask locals for recommendations and be open to unexpected discoveries."
-		
-		destination_travel_tips = f"Plan your trip from {from_city} to {destination} with local insights. Consider best times to visit, local transportation options, cultural etiquette, and seasonal considerations for an optimal experience. Research local customs and learn a few basic phrases to enhance your connection with {destination}. Always carry local currency and be aware of peak tourist seasons."
+	events = load_events_for_city(destination)
+	knowledge = load_city_knowledge(destination) or {}
+	
+	# Debug logging
+	print(f"DEBUG: events type: {type(events)}, content: {events}")
+	print(f"DEBUG: knowledge type: {type(knowledge)}, content: {knowledge}")
+	
+	# Generate destination-specific fallback content with rich, specific details
+	destination_highlights = [
+		f"Explore {destination} city center and main attractions",
+		f"Visit {destination} historic landmarks and cultural sites",
+		f"Discover {destination} hidden gems and local favorites",
+		f"Experience {destination} authentic cuisine and markets",
+		f"Immerse yourself in {destination} local culture and traditions"
+	]
+	
+	destination_cultural_insights = f"Immerse yourself in the rich cultural heritage of {destination}. Learn about local customs, traditions, and etiquette to enhance your travel experience. Respect local practices and engage with the community to truly understand {destination}'s unique character. Take time to observe how locals interact and follow their lead in social situations."
+	
+	destination_local_recommendations = f"Explore authentic experiences beyond typical tourist spots in {destination}. Discover hidden gems, local markets, and neighborhood favorites that showcase the real {destination}. Venture off the beaten path to find the authentic soul of this remarkable destination. Ask locals for recommendations and be open to unexpected discoveries."
+	
+	destination_travel_tips = f"Plan your trip from {from_city} to {destination} with local insights. Consider best times to visit, local transportation options, cultural etiquette, and seasonal considerations for an optimal experience. Research local customs and learn a few basic phrases to enhance your connection with {destination}. Always carry local currency and be aware of peak tourist seasons."
 
 	def pick_unique(pool: List[dict], k: int) -> List[dict]:
 		if not pool or not isinstance(pool, list):
