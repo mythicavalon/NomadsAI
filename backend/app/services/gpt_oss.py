@@ -34,13 +34,28 @@ class GeneratedItinerary(BaseModel):
 
 def surprise_picks_for(destination: str) -> List[str]:
 	knowledge = load_city_knowledge(destination) or {}
-	hidden = [x["name"] for x in knowledge.get("hidden_gems", [])]
+	
+	# Safely extract hidden gems
+	hidden_gems = knowledge.get("hidden_gems", [])
+	hidden = []
+	if isinstance(hidden_gems, list):
+		for x in hidden_gems:
+			if isinstance(x, dict) and "name" in x:
+				hidden.append(x["name"])
+	
 	if hidden:
 		return [f"{name} — local hidden gem worth a detour" for name in hidden[:3]]
+	
 	# try wiki
 	wiki = fetch_top_attractions(destination, max_items=3)
-	if wiki:
-		return [f"{w['title']} — {w['extract'][:90]}…" for w in wiki]
+	if wiki and isinstance(wiki, list):
+		wiki_items = []
+		for w in wiki:
+			if isinstance(w, dict) and "title" in w and "extract" in w:
+				wiki_items.append(f"{w['title']} — {w['extract'][:90]}…")
+		if wiki_items:
+			return wiki_items[:3]
+	
 	return [
 		f"Hidden viewpoint in {destination}",
 		f"Street food crawl in {destination}",
@@ -63,7 +78,15 @@ async def generate_itinerary(
 	# Enhanced AI-powered itinerary generation using NVIDIA NIM GPT-OSS-120B
 	if llm_ready() or base_url:
 		attractions = fetch_top_attractions(destination, max_items=15)  # Increased for better context
-		bullets = "\n".join([f"- {a['title']}: {a['extract'][:160]}" for a in attractions]) or "- city walk"
+		
+		# Safely build bullets from attractions
+		bullets = []
+		if isinstance(attractions, list):
+			for a in attractions:
+				if isinstance(a, dict) and "title" in a and "extract" in a:
+					bullets.append(f"- {a['title']}: {a['extract'][:160]}")
+		
+		bullets_text = "\n".join(bullets) if bullets else "- city walk"
 		
 		# Enhanced prompt for better AI understanding with from/to context
 		enhanced_prompt = [
@@ -117,7 +140,7 @@ Please create a sophisticated itinerary that includes:
 - Travel advice specific to visitors from {from_city or 'various locations'}
 
 Available attractions and context:
-{bullets}
+{bullets_text}
 
 Make this itinerary feel like it was crafted by a local expert who knows the destination intimately and understands the needs of travelers from {from_city or 'different backgrounds'}."""
 			}
