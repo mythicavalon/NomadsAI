@@ -92,7 +92,12 @@ async def plan_travel(request: TravelPlanRequest):
                 if itinerary and len(itinerary) > 0:
                     first_day = itinerary[0]
                     if "cultural_insight" in first_day:
-                        cultural_insights = first_day["cultural_insight"]
+                        insight_data = first_day["cultural_insight"]
+                        # Defensive programming: ensure it's a string
+                        if isinstance(insight_data, list):
+                            cultural_insights = insight_data[0] if insight_data else ""
+                        else:
+                            cultural_insights = str(insight_data) if insight_data else ""
                 
                 if not cultural_insights:
                     cultural_insights = "Immerse yourself in local culture and traditions."
@@ -102,7 +107,12 @@ async def plan_travel(request: TravelPlanRequest):
                 if itinerary and len(itinerary) > 0:
                     first_day = itinerary[0]
                     if "local_secrets" in first_day:
-                        local_recommendations = first_day["local_secrets"]
+                        secrets_data = first_day["local_secrets"]
+                        # Defensive programming: ensure it's a string
+                        if isinstance(secrets_data, list):
+                            local_recommendations = secrets_data[0] if secrets_data else ""
+                        else:
+                            local_recommendations = str(secrets_data) if secrets_data else ""
                 
                 if not local_recommendations:
                     local_recommendations = "Explore authentic local experiences beyond tourist spots."
@@ -112,7 +122,12 @@ async def plan_travel(request: TravelPlanRequest):
                 if itinerary and len(itinerary) > 0:
                     first_day = itinerary[0]
                     if "travel_tips" in first_day:
-                        travel_tips = first_day["travel_tips"]
+                        tips_data = first_day["travel_tips"]
+                        # Defensive programming: ensure it's a string
+                        if isinstance(tips_data, list):
+                            travel_tips = tips_data[0] if tips_data else ""
+                        else:
+                            travel_tips = str(tips_data) if tips_data else ""
                 
                 if not travel_tips:
                     travel_tips = f"Plan your trip from {request.from_city} to {request.destination} with local insights."
