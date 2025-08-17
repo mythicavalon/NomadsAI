@@ -2,6 +2,7 @@ import os
 from typing import List, Optional
 from pydantic import BaseModel
 import random
+import json
 
 from ..utils.mock_loader import load_events_for_city
 from ..utils.knowledge import load_city_knowledge
@@ -57,36 +58,121 @@ async def generate_itinerary(
 	api_key: Optional[str] = None,
 	model: Optional[str] = None,
 ) -> dict:
-	# If LLM configured, synthesize a plan using wiki attractions and preferences
+	# Enhanced AI-powered itinerary generation using NVIDIA NIM GPT-OSS-120B
 	if llm_ready() or base_url:
-		attractions = fetch_top_attractions(destination, max_items=12)
-		bullets = "\n".join([f"- {a['title']}: {a['extract'][:140]}" for a in attractions]) or "- city walk"
-		prompt = [
-			{"role": "system", "content": "You are an expert travel planner. Output a JSON with keys: day_plans (list of {day, summary, activities: [{time,title,description,category}]}), estimated_budget. Keep concise descriptions."},
-			{"role": "user", "content": f"Destination: {destination}\nDays: {days}\nBudget: {budget or 'medium'}\nInterests: {', '.join(interests) or 'general'}\nTravel month: {travel_month or 'unspecified'}\nCandidate attractions and context:\n{bullets}"},
+		attractions = fetch_top_attractions(destination, max_items=15)  # Increased for better context
+		bullets = "\n".join([f"- {a['title']}: {a['extract'][:160]}" for a in attractions]) or "- city walk"
+		
+		# Enhanced prompt for better AI understanding
+		enhanced_prompt = [
+			{
+				"role": "system", 
+				"content": """You are an expert travel planner with deep knowledge of global destinations, cultural nuances, and luxury travel experiences. 
+				
+Your task is to create a sophisticated, personalized travel itinerary that balances must-see attractions with authentic local experiences.
+
+Output a JSON with the following structure:
+{
+  "day_plans": [
+    {
+      "day": 1,
+      "summary": "Brief theme/overview of the day",
+      "activities": [
+        {
+          "time": "09:00",
+          "title": "Activity name",
+          "description": "Detailed description with cultural context and practical tips",
+          "category": "culture/food/adventure/relaxation/shopping"
+        }
+      ]
+    }
+  ],
+  "estimated_budget": "budget level with reasoning",
+  "cultural_insights": "2-3 key cultural tips for this destination",
+  "local_recommendations": "2-3 authentic local experiences beyond typical tourist spots"
+}
+
+Keep descriptions engaging and informative. Consider local customs, best times to visit attractions, and practical travel tips."""
+			},
+			{
+				"role": "user", 
+				"content": f"""Destination: {destination}
+Days: {days}
+Budget: {budget or 'medium'}
+Interests: {', '.join(interests) if interests else 'general exploration'}
+Travel month: {travel_month or 'unspecified'}
+
+Please create a sophisticated itinerary that includes:
+- Cultural immersion opportunities
+- Local culinary experiences
+- Hidden gems and off-the-beaten-path locations
+- Practical timing and logistics
+- Cultural etiquette tips
+
+Available attractions and context:
+{bullets}
+
+Make this itinerary feel like it was crafted by a local expert who knows the destination intimately."""
+			}
 		]
+		
 		try:
-			resp = llm_chat(prompt, base_url=base_url, api_key=api_key, model=model)
+			resp = llm_chat(enhanced_prompt, base_url=base_url, api_key=api_key, model=model)
+			
+			# Enhanced JSON parsing with better error handling
 			start = resp.find('{')
 			end = resp.rfind('}')
 			if start != -1 and end != -1:
 				import json as _json
-				parsed = _json.loads(resp[start:end+1])
-				for d in parsed.get("day_plans", []):
-					for a in d.get("activities", []):
-						if "time" not in a: a["time"] = "09:00"
-				return {
-					"destination": destination,
-					"days": days,
-					"currency": "USD",
-					"estimated_budget": parsed.get("estimated_budget", budget or "medium"),
-					"day_plans": parsed.get("day_plans", []),
-					"surprise_picks": surprise_picks_for(destination),
-				}
-		except Exception:
+				try:
+					parsed = _json.loads(resp[start:end+1])
+					
+					# Enhanced validation and processing
+					day_plans = parsed.get("day_plans", [])
+					for d in day_plans:
+						# Ensure required fields exist
+						if "day" not in d:
+							d["day"] = 1
+						if "summary" not in d:
+							d["summary"] = f"Day {d.get('day', 1)} exploration"
+						
+						activities = d.get("activities", [])
+						for a in activities:
+							if "time" not in a: 
+								a["time"] = "09:00"
+							if "title" not in a:
+								a["title"] = "Local exploration"
+							if "description" not in a:
+								a["description"] = "Discover local culture and attractions"
+							if "category" not in a:
+								a["category"] = "culture"
+					
+					# Enhanced response with additional AI-generated insights
+					result = {
+						"destination": destination,
+						"days": days,
+						"currency": "USD",
+						"estimated_budget": parsed.get("estimated_budget", budget or "medium"),
+						"day_plans": day_plans,
+						"surprise_picks": surprise_picks_for(destination),
+						"ai_enhanced": True,
+						"cultural_insights": parsed.get("cultural_insights", ""),
+						"local_recommendations": parsed.get("local_recommendations", ""),
+						"ai_provider": "NVIDIA NIM GPT-OSS-120B" if not base_url else "Custom LLM"
+					}
+					
+					return result
+					
+				except json.JSONDecodeError as e:
+					print(f"JSON parsing failed: {e}")
+					# Fall through to deterministic generation
+					pass
+		except Exception as e:
+			print(f"AI itinerary generation failed: {e}")
+			# Fall through to deterministic generation
 			pass
 
-	# Fallback: knowledge-driven deterministic plan
+	# Enhanced fallback: knowledge-driven deterministic plan with better structure
 	rng = random.Random(f"{destination}:{days}:{budget}:{','.join(interests)}:{travel_month}")
 	events = load_events_for_city(destination)
 	knowledge = load_city_knowledge(destination) or {}
@@ -98,62 +184,87 @@ async def generate_itinerary(
 		rng.shuffle(copy)
 		return copy[:k]
 
-	landmarks = knowledge.get("landmarks", [])
-	food = knowledge.get("food", [])
-	neigh = knowledge.get("neighborhoods", [])
-	advent = knowledge.get("adventures", [])
-	relax = knowledge.get("relax", [])
+	# Enhanced day planning with better structure
+	day_plans = []
+	for day in range(1, days + 1):
+		# Morning activity
+		morning_events = pick_unique(events.get("morning", []), 1)
+		# Afternoon activity  
+		afternoon_events = pick_unique(events.get("afternoon", []), 1)
+		# Evening activity
+		evening_events = pick_unique(events.get("evening", []), 1)
+		
+		activities = []
+		if morning_events:
+			activities.append(GeneratedActivity(
+				time="09:00",
+				title=morning_events[0]["name"],
+				description=morning_events[0].get("description", "Start your day with local culture"),
+				category="culture"
+			))
+		
+		if afternoon_events:
+			activities.append(GeneratedActivity(
+				time="14:00", 
+				title=afternoon_events[0]["name"],
+				description=afternoon_events[0].get("description", "Explore local attractions"),
+				category="exploration"
+			))
+			
+		if evening_events:
+			activities.append(GeneratedActivity(
+				time="19:00",
+				title=evening_events[0]["name"], 
+				description=evening_events[0].get("description", "Evening cultural experience"),
+				category="evening"
+			))
+		
+		# Add local knowledge-based activities
+		if knowledge.get("food") and day % 2 == 0:  # Every other day
+			food_places = pick_unique(knowledge["food"], 1)
+			if food_places:
+				activities.append(GeneratedActivity(
+					time="12:00",
+					title=f"Local Dining: {food_places[0]['name']}",
+					description=food_places[0].get("description", "Authentic local cuisine"),
+					category="food"
+				))
+		
+		if knowledge.get("landmarks") and day % 3 == 0:  # Every third day
+			landmarks = pick_unique(knowledge["landmarks"], 1)
+			if landmarks:
+				activities.append(GeneratedActivity(
+					time="16:00",
+					title=f"Landmark Visit: {landmarks[0]['name']}",
+					description=landmarks[0].get("description", "Iconic destination landmark"),
+					category="sightseeing"
+				))
+		
+		# Ensure we have at least 3 activities per day
+		while len(activities) < 3:
+			activities.append(GeneratedActivity(
+				time=f"{12 + len(activities) * 2}:00",
+				title="Local Exploration",
+				description="Discover hidden gems and local culture",
+				category="exploration"
+			))
+		
+		# Sort activities by time
+		activities.sort(key=lambda x: x.time)
+		
+		day_plans.append(GeneratedDay(
+			day=day,
+			summary=f"Day {day}: {destination} exploration and cultural immersion",
+			activities=activities
+		))
 
-	day_plans: List[GeneratedDay] = []
-	for i in range(1, days + 1):
-		acts: List[GeneratedActivity] = []
-		lm = pick_unique(landmarks, k=days*2)
-		if lm:
-			item = lm[(i - 1) % len(lm)]
-			acts.append(GeneratedActivity(time="09:00", title=item["name"], description=item["description"], category=item.get("category", "explore")))
-		else:
-			wiki = fetch_top_attractions(destination, max_items=days*2)
-			if wiki:
-				w = wiki[(i - 1) % len(wiki)]
-				acts.append(GeneratedActivity(time="09:00", title=w["title"], description=w["extract"][:140], category="explore"))
-
-		if events:
-			pick = events[(i - 1) % len(events)]
-			acts.append(GeneratedActivity(time="13:00", title=f"Local event: {pick['name']}", description=f"At {pick['location']} — starts {pick.get('start_date','TBA')}", category="event"))
-		else:
-			fd = pick_unique(food, k=days)
-			if fd:
-				item = fd[(i - 1) % len(fd)]
-				acts.append(GeneratedActivity(time="13:00", title=item["name"], description=item["description"], category="food"))
-
-		ad = pick_unique(advent, k=days)
-		if ad:
-			item = ad[(i - 1) % len(ad)]
-			acts.append(GeneratedActivity(time="16:00", title=item["name"], description=item["description"], category="adventure"))
-		else:
-			nb2 = pick_unique(neigh, k=days)
-			if nb2:
-				item = nb2[(i - 1) % len(nb2)]
-				acts.append(GeneratedActivity(time="16:00", title=f"Explore {item['name']}", description=item["description"], category="explore"))
-
-		fd2 = pick_unique(food, k=days*2)
-		if fd2:
-			item = fd2[(i - 1) % len(fd2)]
-			acts.append(GeneratedActivity(time="19:00", title=item["name"], description=item["description"], category="food"))
-		else:
-			rel = pick_unique(relax, k=days)
-			if rel:
-				item = rel[(i - 1) % len(rel)]
-				acts.append(GeneratedActivity(time="19:00", title=item["name"], description=item["description"], category="relax"))
-
-		day_plans.append(GeneratedDay(day=i, summary=f"Day {i} in {destination}", activities=acts))
-
-	estimated = budget or "medium"
-
-	return GeneratedItinerary(
-		destination=destination,
-		days=days,
-		estimated_budget=estimated,
-		day_plans=day_plans,
-		surprise_picks=surprise_picks_for(destination),
-	).model_dump()
+	return {
+		"destination": destination,
+		"days": days,
+		"currency": "USD",
+		"estimated_budget": budget or "medium",
+		"day_plans": [dp.dict() for dp in day_plans],
+		"surprise_picks": surprise_picks_for(destination),
+		"ai_enhanced": False,
+		"ai_provider": "Knowledge-based fallback"
+	}

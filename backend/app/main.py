@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 
 from .routers import itineraries, signals, memory, digest, chat
+from .services.llm_client import get_ai_provider_info
 
 
 def create_app() -> FastAPI:
@@ -36,6 +37,22 @@ def create_app() -> FastAPI:
 	@app.get("/healthz")
 	def healthcheck():
 		return {"status": "ok"}
+
+	@app.get("/api/ai-status")
+	def ai_status():
+		"""Get AI provider status and capabilities"""
+		return {
+			"status": "active",
+			"ai_providers": get_ai_provider_info(),
+			"platform": "NomadAI",
+			"version": "2.0",
+			"features": [
+				"GPT-OSS-120B Integration",
+				"Advanced Travel Planning",
+				"Cultural Intelligence",
+				"Real-time AI Responses"
+			]
+		}
 
 	return app
 

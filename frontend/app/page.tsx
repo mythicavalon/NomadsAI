@@ -2,12 +2,19 @@
 
 import { useEffect, useState, useRef } from "react";
 import { clsx } from "clsx";
-import { Search, MapPin, Calendar, Users, DollarSign, Sparkles, TrendingUp, Globe, Clock, Star, Diamond, Crown, Plane, Zap, Brain } from "lucide-react";
+import { Search, MapPin, Calendar, Users, DollarSign, Sparkles, TrendingUp, Globe, Clock, Star, Diamond, Crown, Plane, Zap, Brain, CheckCircle } from "lucide-react";
 import { Button, Input, Card, Select, Checkbox } from "../components/ui";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
 type Signal = any;
+type AIStatus = {
+	status: string;
+	ai_providers: any;
+	platform: string;
+	version: string;
+	features: string[];
+};
 
 // Comprehensive city database for autocomplete
 const WORLD_CITIES = [
@@ -56,6 +63,7 @@ export default function HomePage() {
 	const [surprise, setSurprise] = useState<string[] | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [onlineMode, setOnlineMode] = useState(true);
+	const [aiStatus, setAiStatus] = useState<AIStatus | null>(null);
 	const searchRef = useRef<HTMLDivElement>(null);
 
 	const interestOptions = [
@@ -95,6 +103,22 @@ export default function HomePage() {
 		}
 		document.addEventListener("mousedown", handleClickOutside);
 		return () => document.removeEventListener("mousedown", handleClickOutside);
+	}, []);
+
+	// Fetch AI status
+	useEffect(() => {
+		const fetchAIStatus = async () => {
+			try {
+				const response = await fetch(`${API_BASE}/api/ai-status`);
+				if (response.ok) {
+					const status = await response.json();
+					setAiStatus(status);
+				}
+			} catch (error) {
+				console.log("AI status not available");
+			}
+		};
+		fetchAIStatus();
 	}, []);
 
 	// Fetch signals
@@ -173,6 +197,23 @@ export default function HomePage() {
 
 	return (
 		<div className="space-y-16 animate-fade-in">
+			{/* AI Status Banner */}
+			{aiStatus && (
+				<div className="bg-gradient-to-r from-accent-500/10 to-info-500/10 border border-accent-500/20 rounded-xl p-4">
+					<div className="flex items-center justify-center gap-3 text-center">
+						<CheckCircle className="w-5 h-5 text-accent-400" />
+						<div className="space-y-1">
+							<div className="text-sm font-medium text-accent-400">
+								Powered by NVIDIA NIM GPT-OSS-120B
+							</div>
+							<div className="text-xs text-gray-400">
+								Advanced AI travel planning with cultural intelligence
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
+
 			{/* Hero Section */}
 			<section className="text-center space-y-8">
 				<div className="space-y-6">
@@ -180,7 +221,7 @@ export default function HomePage() {
 						Your AI-Powered Travel Companion
 					</h1>
 					<p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-						Experience intelligent travel planning with AI that learns your preferences, 
+						Experience intelligent travel planning with NVIDIA's advanced AI that learns your preferences, 
 						discovers hidden gems, and creates personalized adventures just for you.
 					</p>
 				</div>
@@ -285,7 +326,7 @@ export default function HomePage() {
 				<div className="text-center space-y-4">
 					<h2 className="heading-2xl">Customize Your Experience</h2>
 					<p className="text-gray-300 max-w-2xl mx-auto">
-						Fine-tune your travel preferences to get the most personalized recommendations
+						Fine-tune your travel preferences to get the most personalized recommendations from our advanced AI
 					</p>
 				</div>
 
@@ -404,7 +445,7 @@ export default function HomePage() {
 				<div className="text-center space-y-4">
 					<h2 className="heading-2xl">Why Choose NomadAI?</h2>
 					<p className="text-gray-300 max-w-2xl mx-auto">
-						Experience the future of travel planning with cutting-edge AI technology
+						Experience the future of travel planning with cutting-edge NVIDIA AI technology
 					</p>
 				</div>
 
@@ -413,9 +454,9 @@ export default function HomePage() {
 						<div className="w-16 h-16 bg-accent-500/20 rounded-full flex items-center justify-center mx-auto">
 							<Brain className="w-8 h-8 text-accent-400" />
 						</div>
-						<h3 className="heading-md">AI Learning</h3>
+						<h3 className="heading-md">Advanced AI Learning</h3>
 						<p className="text-gray-300">
-							Our AI learns from every interaction, getting smarter about your preferences with each trip
+							Powered by NVIDIA's GPT-OSS-120B model for intelligent, context-aware travel recommendations
 						</p>
 					</Card>
 
