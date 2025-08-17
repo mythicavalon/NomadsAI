@@ -224,17 +224,48 @@ function ResultsPageContent() {
                           {day.activities && day.activities.length > 0 ? (
                             day.activities.map((activity, actIndex) => {
                               console.log(`🔍 DEBUG: Rendering activity ${actIndex}:`, activity);
+                              
+                              // Parse activity data - handle both string and object formats
+                              let time = '';
+                              let title = '';
+                              let description = '';
+                              let category = '';
+                              
+                              if (typeof activity === 'string') {
+                                // Parse string format: "09:00: Activity Name"
+                                const colonIndex = activity.indexOf(':');
+                                if (colonIndex !== -1) {
+                                  time = activity.substring(0, colonIndex).trim();
+                                  title = activity.substring(colonIndex + 1).trim();
+                                  description = `Experience ${title.toLowerCase()} in ${travelPlan.destination}`;
+                                  category = 'exploration';
+                                } else {
+                                  title = activity;
+                                  time = '09:00';
+                                  description = `Enjoy ${activity.toLowerCase()} in ${travelPlan.destination}`;
+                                  category = 'activity';
+                                }
+                              } else if (typeof activity === 'object' && activity !== null) {
+                                // Handle object format with time, title, description, category
+                                time = activity.time || '09:00';
+                                title = activity.title || 'Local Activity';
+                                description = activity.description || `Experience local culture in ${travelPlan.destination}`;
+                                category = 'exploration';
+                              }
+                              
+                              console.log(`🔍 DEBUG: Parsed activity ${actIndex}:`, { time, title, description, category });
+                              
                               return (
                                 <div key={actIndex} className="flex gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
                                   <div className="text-sm font-mono text-blue-600 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">
-                                    {activity.time}
+                                    {time}
                                   </div>
                                   <div className="flex-1">
-                                    <h4 className="font-semibold text-foreground mb-1">{activity.title}</h4>
-                                    <p className="text-muted-foreground text-sm leading-relaxed">{activity.description}</p>
-                                    {activity.category && (
+                                    <h4 className="font-semibold text-foreground mb-1">{title}</h4>
+                                    <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
+                                    {category && (
                                       <span className="inline-block mt-2 text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded">
-                                        {activity.category}
+                                        {category}
                                       </span>
                                     )}
                                   </div>
