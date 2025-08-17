@@ -186,11 +186,19 @@ Make this itinerary feel like it was crafted by a local expert who knows the des
 	rng = random.Random(f"{from_city}:{destination}:{days}:{budget}:{','.join(interests)}:{travel_month}")
 	events = load_events_for_city(destination)
 	knowledge = load_city_knowledge(destination) or {}
+	
+	# Debug logging
+	print(f"DEBUG: events type: {type(events)}, content: {events}")
+	print(f"DEBUG: knowledge type: {type(knowledge)}, content: {knowledge}")
 
 	def pick_unique(pool: List[dict], k: int) -> List[dict]:
-		if not pool:
+		if not pool or not isinstance(pool, list):
 			return []
-		copy = pool[:]
+		# Filter to ensure only dictionaries are included
+		valid_items = [item for item in pool if isinstance(item, dict)]
+		if not valid_items:
+			return []
+		copy = valid_items[:]
 		rng.shuffle(copy)
 		return copy[:k]
 
@@ -205,26 +213,26 @@ Make this itinerary feel like it was crafted by a local expert who knows the des
 		evening_events = pick_unique(events.get("evening", []), 1)
 		
 		activities = []
-		if morning_events:
+		if morning_events and len(morning_events) > 0 and isinstance(morning_events[0], dict):
 			activities.append(GeneratedActivity(
 				time="09:00",
-				title=morning_events[0]["name"],
+				title=morning_events[0].get("name", "Morning Activity"),
 				description=morning_events[0].get("description", "Start your day with local culture"),
 				category="culture"
 			))
 		
-		if afternoon_events:
+		if afternoon_events and len(afternoon_events) > 0 and isinstance(afternoon_events[0], dict):
 			activities.append(GeneratedActivity(
 				time="14:00", 
-				title=afternoon_events[0]["name"],
+				title=afternoon_events[0].get("name", "Afternoon Activity"),
 				description=afternoon_events[0].get("description", "Explore local attractions"),
 				category="exploration"
 			))
 			
-		if evening_events:
+		if evening_events and len(evening_events) > 0 and isinstance(evening_events[0], dict):
 			activities.append(GeneratedActivity(
 				time="19:00",
-				title=evening_events[0]["name"], 
+				title=evening_events[0].get("name", "Evening Activity"), 
 				description=evening_events[0].get("description", "Evening cultural experience"),
 				category="evening"
 			))
@@ -232,20 +240,20 @@ Make this itinerary feel like it was crafted by a local expert who knows the des
 		# Add local knowledge-based activities
 		if knowledge.get("food") and day % 2 == 0:  # Every other day
 			food_places = pick_unique(knowledge["food"], 1)
-			if food_places:
+			if food_places and len(food_places) > 0 and isinstance(food_places[0], dict):
 				activities.append(GeneratedActivity(
 					time="12:00",
-					title=f"Local Dining: {food_places[0]['name']}",
+					title=f"Local Dining: {food_places[0].get('name', 'Local Restaurant')}",
 					description=food_places[0].get("description", "Authentic local cuisine"),
 					category="food"
 				))
 		
 		if knowledge.get("landmarks") and day % 3 == 0:  # Every third day
 			landmarks = pick_unique(knowledge["landmarks"], 1)
-			if landmarks:
+			if landmarks and len(landmarks) > 0 and isinstance(landmarks[0], dict):
 				activities.append(GeneratedActivity(
 					time="16:00",
-					title=f"Landmark Visit: {landmarks[0]['name']}",
+					title=f"Landmark Visit: {landmarks[0].get('name', 'Local Landmark')}",
 					description=landmarks[0].get("description", "Iconic destination landmark"),
 					category="sightseeing"
 				))
