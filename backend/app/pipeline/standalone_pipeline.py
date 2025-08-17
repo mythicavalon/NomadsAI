@@ -119,6 +119,26 @@ class StandalonePipeline:
                     "Chelsea Market - Food hall in historic building"
                 ],
                 "practical_info": "NYC has extensive subway and bus system. The MetroCard is convenient for transport. Many museums have suggested donation admission."
+            },
+            "sydney": {
+                "attractions": [
+                    "Sydney Opera House - Iconic performing arts venue with unique architecture",
+                    "Sydney Harbour Bridge - Steel arch bridge with panoramic city views",
+                    "Bondi Beach - Famous beach with golden sand and surf culture",
+                    "Royal Botanic Gardens - Stunning waterfront gardens with harbor views",
+                    "The Rocks - Historic area with cobblestone streets and weekend markets",
+                    "Taronga Zoo - World-class zoo with harbor views and native Australian animals",
+                    "Darling Harbour - Waterfront precinct with attractions and dining",
+                    "Blue Mountains - UNESCO World Heritage area with dramatic landscapes"
+                ],
+                "culture": "Sydney is Australia's largest city, known for its stunning harbor, outdoor lifestyle, and multicultural dining scene. The city combines modern urban sophistication with laid-back beach culture.",
+                "hidden_gems": [
+                    "Wenzel Pinnacle - Secret lookout in the Blue Mountains with 360-degree views",
+                    "Barangaroo Reserve - Native parkland on the harbor foreshore",
+                    "Angel Place - Laneway with golden birdcage art installation",
+                    "Observatory Hill - Historic park with harbor views and astronomy"
+                ],
+                "practical_info": "Sydney has an extensive public transport system including trains, buses, and ferries. The Opal card works across all transport. Many beaches are easily accessible by public transport."
             }
         }
         
@@ -190,34 +210,60 @@ class StandalonePipeline:
     
     def _generate_skeleton(self, destination: str, days: int, from_city: str, 
                           budget: str, interests: List[str]) -> Dict:
-        """Generate a basic skeleton itinerary."""
+        """Generate a basic skeleton itinerary with varied activities and times."""
         
         # Create destination-specific themes
         themes = [
             f"Day 1: {destination} introduction and cultural immersion",
-            f"Day 2: {destination} main attractions and landmarks",
+            f"Day 2: {destination} main attractions and landmarks", 
             f"Day 3: {destination} local experiences and hidden gems",
             f"Day 4: {destination} culinary adventures and nightlife",
-            f"Day 5: {destination} shopping and relaxation"
+            f"Day 5: {destination} shopping and relaxation",
+            f"Day 6: {destination} outdoor adventures and nature",
+            f"Day 7: {destination} art, history and museums"
         ]
         
-        # Create destination-specific activities
-        activities = [
-            f"Explore {destination} city center and main attractions",
-            f"Visit {destination} museums and cultural sites",
-            f"Experience {destination} local cuisine and restaurants",
-            f"Discover {destination} hidden gems and local markets",
-            f"Enjoy {destination} parks and outdoor spaces"
+        # Create varied activity templates with times
+        morning_activities = [
+            "09:00 - Explore iconic landmarks and main attractions",
+            "08:30 - Visit world-renowned museums and galleries", 
+            "09:30 - Discover historic neighborhoods and architecture",
+            "08:00 - Experience local markets and street food",
+            "09:00 - Enjoy scenic parks and outdoor spaces"
         ]
         
-        # Build itinerary
+        afternoon_activities = [
+            "14:00 - Tour cultural sites and monuments",
+            "13:30 - Experience authentic local cuisine",
+            "15:00 - Explore hidden gems and local favorites", 
+            "14:30 - Visit specialty shops and unique districts",
+            "13:00 - Relax in beautiful gardens and waterfront areas"
+        ]
+        
+        evening_activities = [
+            "19:00 - Experience vibrant nightlife and entertainment",
+            "18:30 - Enjoy sunset views from scenic viewpoints",
+            "20:00 - Dine at renowned restaurants and local eateries",
+            "19:30 - Attend cultural performances and shows",
+            "18:00 - Stroll through illuminated city centers"
+        ]
+        
+        # Build itinerary with varied content
         itinerary = []
         for i in range(days):
             day_num = i + 1
             theme = themes[i % len(themes)]
-            day_activities = activities[i % len(activities):(i % len(activities)) + 3]
-            if len(day_activities) < 3:
-                day_activities.extend(activities[:3 - len(day_activities)])
+            
+            # Select varied activities for each day
+            morning_idx = i % len(morning_activities)
+            afternoon_idx = (i + 1) % len(afternoon_activities) 
+            evening_idx = (i + 2) % len(evening_activities)
+            
+            day_activities = [
+                morning_activities[morning_idx],
+                afternoon_activities[afternoon_idx],
+                evening_activities[evening_idx]
+            ]
             
             itinerary.append({
                 "day": day_num,
@@ -244,14 +290,23 @@ class StandalonePipeline:
         knowledge = self._get_destination_knowledge(destination.lower())
         
         if knowledge:
-            # Enhance activities with real attractions
+            # Enhance activities with real attractions while preserving timing
             for day in enriched.get("itinerary", []):
                 activities = day.get("activities", [])
                 enhanced_activities = []
                 
                 for i, activity in enumerate(activities):
                     if "attractions" in knowledge and i < len(knowledge["attractions"]):
-                        enhanced_activities.append(knowledge["attractions"][i])
+                        # Extract time from skeleton activity if present
+                        time_part = ""
+                        if " - " in activity:
+                            time_part = activity.split(" - ")[0] + " - "
+                        elif activity.startswith(("08:", "09:", "10:", "11:", "12:", "13:", "14:", "15:", "16:", "17:", "18:", "19:", "20:")):
+                            time_part = activity.split(" - ")[0] + " - " if " - " in activity else activity[:5] + " - "
+                        
+                        # Combine time with real attraction
+                        enhanced_activity = time_part + knowledge["attractions"][i]
+                        enhanced_activities.append(enhanced_activity)
                     else:
                         enhanced_activities.append(activity)
                 
