@@ -23,7 +23,7 @@ interface TravelPlan {
   itinerary: Array<{
     day: number;
     summary: string;
-    activities: Array<{
+    activities: Array<string | {
       time: string;
       title: string;
       description: string;
@@ -245,11 +245,18 @@ function ResultsPageContent() {
                                   description = `Enjoy ${activity.toLowerCase()} in ${travelPlan.destination}`;
                                   category = 'activity';
                                 }
-                              } else if (typeof activity === 'object' && activity !== null) {
+                              } else if (typeof activity === 'object' && activity !== null && 'time' in activity) {
                                 // Handle object format with time, title, description, category
-                                time = activity.time || '09:00';
-                                title = activity.title || 'Local Activity';
-                                description = activity.description || `Experience local culture in ${travelPlan.destination}`;
+                                const activityObj = activity as { time: string; title: string; description: string; category?: string };
+                                time = activityObj.time || '09:00';
+                                title = activityObj.title || 'Local Activity';
+                                description = activityObj.description || `Experience local culture in ${travelPlan.destination}`;
+                                category = activityObj.category || 'exploration';
+                              } else {
+                                // Fallback for unexpected data types
+                                time = '09:00';
+                                title = 'Local Activity';
+                                description = `Experience local culture in ${travelPlan.destination}`;
                                 category = 'exploration';
                               }
                               
