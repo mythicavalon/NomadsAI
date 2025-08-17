@@ -40,20 +40,9 @@ async def plan_travel(request: TravelPlanRequest):
         if not request.interests:
             raise HTTPException(status_code=400, detail="At least one interest must be selected")
         
-        # Generate itinerary using the new standalone pipeline
+        # Generate itinerary using GPT-OSS-120B AI first
         try:
-            logger.info(f"Using standalone pipeline for {request.destination}")
-            itinerary_data = generate_itinerary_pipeline(
-                destination=request.destination,
-                days=days,
-                from_city=request.from_city,
-                budget=request.budget,
-                interests=request.interests
-            )
-            logger.info("Pipeline generation successful")
-        except Exception as pipeline_error:
-            logger.warning(f"Pipeline failed, falling back to legacy system: {pipeline_error}")
-            # Fallback to legacy system
+            logger.info(f"Using GPT-OSS-120B AI for {request.destination}")
             itinerary_data = await generate_itinerary(
                 destination=request.destination,
                 days=days,
@@ -62,6 +51,17 @@ async def plan_travel(request: TravelPlanRequest):
                 travel_month=start_date.strftime("%B"),
                 from_city=request.from_city,
                 travelers=request.travelers
+            )
+            logger.info("GPT-OSS AI generation successful")
+        except Exception as ai_error:
+            logger.warning(f"GPT-OSS AI failed, falling back to standalone pipeline: {ai_error}")
+            # Fallback to standalone pipeline
+            itinerary_data = generate_itinerary_pipeline(
+                destination=request.destination,
+                days=days,
+                from_city=request.from_city,
+                budget=request.budget,
+                interests=request.interests
             )
         
         # Debug logging
