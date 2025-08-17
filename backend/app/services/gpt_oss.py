@@ -185,21 +185,34 @@ Make this itinerary feel like it was crafted by a local expert who knows the des
 											if "category" not in a:
 												a["category"] = "culture"
 					
-					# Enhanced response with additional AI-generated insights
+					# Enhanced response with additional AI-generated insights - Convert to desired schema
+					itinerary = []
+					for d in day_plans:
+						if isinstance(d, dict):
+							activities = d.get("activities", [])
+							day_activities = []
+							for a in activities:
+								if isinstance(a, dict):
+									day_activities.append(f"{a.get('time', '')}: {a.get('title', '')}")
+							
+							itinerary.append({
+								"day": d.get("day", 1),
+								"title": d.get("summary", f"Day {d.get('day', 1)}"),
+								"activities": day_activities
+							})
+					
 					result = {
-						"destination": destination,
-						"days": days,
-						"currency": "USD",
+						"summary": f"Your {days}-day journey from {from_city} to {destination}",
+						"itinerary": itinerary,
+						"highlights": surprise_picks_for(destination),
 						"estimated_budget": parsed.get("estimated_budget", budget or "medium"),
-						"day_plans": day_plans,
-						"surprise_picks": surprise_picks_for(destination),
-						"ai_enhanced": True,
-						"cultural_insights": parsed.get("cultural_insights", ""),
-						"local_recommendations": parsed.get("local_recommendations", ""),
-						"travel_tips": parsed.get("travel_tips", ""),
+						"cultural_insights": parsed.get("cultural_insights", f"Immerse yourself in the local culture of {destination}"),
+						"local_recommendations": parsed.get("local_recommendations", f"Explore authentic experiences beyond typical tourist spots in {destination}"),
+						"travel_tips": parsed.get("travel_tips", f"Plan your trip from {from_city} to {destination} with local insights"),
 						"ai_provider": "NVIDIA NIM GPT-OSS-120B" if not base_url else "Custom LLM",
 						"from_city": from_city,
-						"travelers": travelers
+						"destination": destination,
+						"total_days": days
 					}
 					
 					return result
@@ -233,61 +246,79 @@ Make this itinerary feel like it was crafted by a local expert who knows the des
 		rng.shuffle(copy)
 		return copy[:k]
 
-	# Enhanced day planning with better structure
+		# Enhanced day planning with better structure - Fixed for flat events list
 	day_plans = []
+	
+	# Get available events for the destination
+	available_events = []
+	if isinstance(events, list):
+		available_events = [e for e in events if isinstance(e, dict)]
+	
+	# Get available knowledge items
+	available_food = []
+	available_landmarks = []
+	if isinstance(knowledge, dict):
+		if "food" in knowledge and isinstance(knowledge["food"], list):
+			available_food = [f for f in knowledge["food"] if isinstance(f, dict)]
+		if "landmarks" in knowledge and isinstance(knowledge["landmarks"], list):
+			available_landmarks = [l for l in knowledge["landmarks"] if isinstance(l, dict)]
+	
 	for day in range(1, days + 1):
-		# Morning activity
-		morning_events = pick_unique(events.get("morning", []), 1)
-		# Afternoon activity  
-		afternoon_events = pick_unique(events.get("afternoon", []), 1)
-		# Evening activity
-		evening_events = pick_unique(events.get("evening", []), 1)
-		
 		activities = []
-		if morning_events and len(morning_events) > 0 and isinstance(morning_events[0], dict):
+		
+		# Morning activity (9:00 AM)
+		if available_events:
+			event = available_events[day % len(available_events)]
+			if isinstance(event, dict):
+				activities.append(GeneratedActivity(
+					time="09:00",
+					title=event.get("name", "Morning Activity"),
+					description=f"Start your day with {event.get('name', 'local culture')}",
+					category="culture"
+				))
+		else:
 			activities.append(GeneratedActivity(
 				time="09:00",
-				title=morning_events[0].get("name", "Morning Activity"),
-				description=morning_events[0].get("description", "Start your day with local culture"),
+				title="Morning Exploration",
+				description="Begin your day discovering local culture and attractions",
 				category="culture"
 			))
 		
-		if afternoon_events and len(afternoon_events) > 0 and isinstance(afternoon_events[0], dict):
-			activities.append(GeneratedActivity(
-				time="14:00", 
-				title=afternoon_events[0].get("name", "Afternoon Activity"),
-				description=afternoon_events[0].get("description", "Explore local attractions"),
-				category="exploration"
-			))
-			
-		if evening_events and len(evening_events) > 0 and isinstance(evening_events[0], dict):
-			activities.append(GeneratedActivity(
-				time="19:00",
-				title=evening_events[0].get("name", "Evening Activity"), 
-				description=evening_events[0].get("description", "Evening cultural experience"),
-				category="evening"
-			))
-		
-		# Add local knowledge-based activities
-		if knowledge.get("food") and day % 2 == 0:  # Every other day
-			food_places = pick_unique(knowledge["food"], 1)
-			if food_places and len(food_places) > 0 and isinstance(food_places[0], dict):
+		# Afternoon activity (2:00 PM)
+		if available_landmarks and day % 2 == 0:
+			landmark = available_landmarks[day % len(available_landmarks)]
+			if isinstance(landmark, dict):
 				activities.append(GeneratedActivity(
-					time="12:00",
-					title=f"Local Dining: {food_places[0].get('name', 'Local Restaurant')}",
-					description=food_places[0].get("description", "Authentic local cuisine"),
-					category="food"
-				))
-		
-		if knowledge.get("landmarks") and day % 3 == 0:  # Every third day
-			landmarks = pick_unique(knowledge["landmarks"], 1)
-			if landmarks and len(landmarks) > 0 and isinstance(landmarks[0], dict):
-				activities.append(GeneratedActivity(
-					time="16:00",
-					title=f"Landmark Visit: {landmarks[0].get('name', 'Local Landmark')}",
-					description=landmarks[0].get("description", "Iconic destination landmark"),
+					time="14:00",
+					title=f"Visit {landmark.get('name', 'Local Landmark')}",
+					description=landmark.get("description", "Explore this iconic destination"),
 					category="sightseeing"
 				))
+		else:
+			activities.append(GeneratedActivity(
+				time="14:00",
+				title="Afternoon Discovery",
+				description="Explore local attractions and hidden gems",
+				category="exploration"
+			))
+		
+		# Evening activity (7:00 PM)
+		if available_food and day % 3 == 0:
+			food_place = available_food[day % len(available_food)]
+			if isinstance(food_place, dict):
+				activities.append(GeneratedActivity(
+					time="19:00",
+					title=f"Dine at {food_place.get('name', 'Local Restaurant')}",
+					description=food_place.get("description", "Experience authentic local cuisine"),
+					category="food"
+				))
+		else:
+			activities.append(GeneratedActivity(
+				time="19:00",
+				title="Evening Experience",
+				description="Enjoy local evening culture and entertainment",
+				category="evening"
+			))
 		
 		# Ensure we have at least 3 activities per day
 		while len(activities) < 3:
@@ -307,15 +338,26 @@ Make this itinerary feel like it was crafted by a local expert who knows the des
 			activities=activities
 		))
 
+	# Convert to the exact schema requested
+	itinerary = []
+	for dp in day_plans:
+		day_data = dp.model_dump() if hasattr(dp, 'model_dump') else dp.dict()
+		itinerary.append({
+			"day": day_data.get("day", 1),
+			"title": day_data.get("summary", f"Day {day_data.get('day', 1)}"),
+			"activities": [f"{act.get('time', '')}: {act.get('title', '')}" for act in day_data.get("activities", [])]
+		})
+	
 	return {
-		"destination": destination,
-		"days": days,
-		"currency": "USD",
+		"summary": f"Your {days}-day journey from {from_city} to {destination}",
+		"itinerary": itinerary,
+		"highlights": surprise_picks_for(destination),
 		"estimated_budget": budget or "medium",
-		"day_plans": [dp.model_dump() if hasattr(dp, 'model_dump') else dp.dict() for dp in day_plans],
-		"surprise_picks": surprise_picks_for(destination),
-		"ai_enhanced": False,
+		"cultural_insights": f"Immerse yourself in the local culture of {destination}",
+		"local_recommendations": f"Explore authentic experiences beyond typical tourist spots in {destination}",
+		"travel_tips": f"Plan your trip from {from_city} to {destination} with local insights",
 		"ai_provider": "Knowledge-based fallback",
 		"from_city": from_city,
-		"travelers": travelers
+		"destination": destination,
+		"total_days": days
 	}
