@@ -11,11 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive error handling and debugging for travel planning API
 - Enhanced type safety for AI response parsing
 - Debug logging throughout the travel planning pipeline
+- Retry mechanism for AI itinerary generation
+- Destination-specific fallback activities
+- Enhanced AI prompting with explicit activity requirements
 
 ### Fixed
 - Multiple critical bugs in list/dict operations causing travel planning failures
 - Comprehensive safety checks for data processing in fallback scenarios
 - Type validation for all AI-generated responses
+- Frontend activity parsing for time/title extraction
+- TypeScript build errors and type safety issues
+- Generic placeholder activities in travel itineraries
+- AI prompt schema mismatches
+- Data flow from backend to frontend components
+
+### Changed
+- Unified AI response schema (itinerary instead of day_plans)
+- Enhanced AI prompts with explicit activity requirements
+- Improved fallback logic with destination-specific content
+- Better error handling and logging throughout the system
 
 ## [2.0.0] - 2024-12-19
 
