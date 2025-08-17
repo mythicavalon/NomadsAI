@@ -5,6 +5,10 @@ from ..services.gpt_oss import generate_itinerary
 from ..pipeline import generate_itinerary_pipeline
 from ..services.llm_client import is_configured
 import json
+import logging
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -36,10 +40,10 @@ async def plan_travel(request: TravelPlanRequest):
         if not request.interests:
             raise HTTPException(status_code=400, detail="At least one interest must be selected")
         
-        # Generate itinerary using the new two-stage pipeline
+        # Generate itinerary using the new standalone pipeline
         try:
-            logger.info(f"Using new pipeline for {request.destination}")
-            itinerary_data = await generate_itinerary_pipeline(
+            logger.info(f"Using standalone pipeline for {request.destination}")
+            itinerary_data = generate_itinerary_pipeline(
                 destination=request.destination,
                 days=days,
                 from_city=request.from_city,
@@ -73,18 +77,48 @@ async def plan_travel(request: TravelPlanRequest):
                 summary = itinerary_data.get("summary", f"Your {days}-day journey from {request.from_city} to {request.destination}")
                 itinerary = itinerary_data.get("itinerary", [])
                 
-                # Safely extract highlights - ensure it's a list
-                highlights_raw = itinerary_data.get("highlights", [])
-                if isinstance(highlights_raw, list):
-                    highlights = highlights_raw
-                else:
-                    highlights = [f"Explore {request.destination}", f"Experience local culture", f"Discover hidden gems"]
+                # Extract highlights from the first day's highlights
+                highlights = []
+                if itinerary and len(itinerary) > 0:
+                    first_day = itinerary[0]
+                    if "highlights" in first_day and isinstance(first_day["highlights"], list):
+                        highlights = first_day["highlights"]
+                
+                if not highlights:
+                    highlights = [f"Explore {request.destination}", f"Experience local culture", "Discover hidden gems"]
+                
+                # Extract cultural insights from the first day
+                cultural_insights = ""
+                if itinerary and len(itinerary) > 0:
+                    first_day = itinerary[0]
+                    if "cultural_insight" in first_day:
+                        cultural_insights = first_day["cultural_insight"]
+                
+                if not cultural_insights:
+                    cultural_insights = "Immerse yourself in local culture and traditions."
+                
+                # Extract local secrets from the first day
+                local_recommendations = ""
+                if itinerary and len(itinerary) > 0:
+                    first_day = itinerary[0]
+                    if "local_secrets" in first_day:
+                        local_recommendations = first_day["local_secrets"]
+                
+                if not local_recommendations:
+                    local_recommendations = "Explore authentic local experiences beyond tourist spots."
+                
+                # Extract travel tips from the first day
+                travel_tips = ""
+                if itinerary and len(itinerary) > 0:
+                    first_day = itinerary[0]
+                    if "travel_tips" in first_day:
+                        travel_tips = first_day["travel_tips"]
+                
+                if not travel_tips:
+                    travel_tips = f"Plan your trip from {request.from_city} to {request.destination} with local insights."
                 
                 estimated_budget = itinerary_data.get("estimated_budget", request.budget)
-                cultural_insights = itinerary_data.get("cultural_insights", "Immerse yourself in local culture and traditions.")
-                local_recommendations = itinerary_data.get("local_recommendations", "Explore authentic local experiences beyond tourist spots.")
-                travel_tips = itinerary_data.get("travel_tips", f"Plan your trip from {request.from_city} to {request.destination} with local insights.")
-                ai_provider = itinerary_data.get("ai_provider", "Two-Stage Pipeline + GPT-OSS")
+                ai_provider = itinerary_data.get("ai_provider", "Standalone Lightweight Pipeline")
                 
                 # Check if pipeline info is available
                 pipeline_info = itinerary_data.get("pipeline_info", {})
@@ -121,7 +155,7 @@ async def plan_travel(request: TravelPlanRequest):
             ]
             
             itinerary = [{"day": i+1, "summary": f"Day {i+1} in {request.destination}", "activities": destination_activities} for i in range(days)]
-            highlights = [f"Explore {request.destination}", f"Experience local culture", f"Discover hidden gems"]
+            highlights = [f"Explore {request.destination}", f"Experience local culture", "Discover hidden gems"]
             estimated_budget = request.budget
             cultural_insights = "Immerse yourself in local culture and traditions."
             local_recommendations = "Explore authentic local experiences beyond tourist spots."
