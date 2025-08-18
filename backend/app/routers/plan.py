@@ -1,9 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
 from ..models import TravelPlanRequest, TravelPlanResponse
-from ..services.gpt_oss import generate_itinerary
-from ..pipeline import generate_itinerary_pipeline_enhanced, generate_itinerary_pipeline
-from ..services.llm_client import is_configured, NVIDIA_NIM_API_KEY
+from ..services.ai_itinerary import generate_dynamic_itinerary
+from ..services.llm_provider import is_configured, get_ai_provider_info
 import json
 import logging
 
@@ -16,6 +15,7 @@ router = APIRouter()
 async def plan_travel(request: TravelPlanRequest):
     """
     Generate AI-powered travel itinerary with complete travel plan data.
+    Uses dynamic AI generation without pre-fed data.
     """
     try:
         # Validate request
@@ -40,153 +40,52 @@ async def plan_travel(request: TravelPlanRequest):
         if not request.interests:
             raise HTTPException(status_code=400, detail="At least one interest must be selected")
         
-        # Generate itinerary - prioritize working standalone pipeline
-        try:
-            # First try GPT-OSS-120B AI if API key is configured
-            if NVIDIA_NIM_API_KEY:
-                logger.info(f"Using GPT-OSS-120B AI for {request.destination}")
-                itinerary_data = await generate_itinerary(
-                    destination=request.destination,
-                    days=days,
-                    budget=request.budget,
-                    interests=request.interests,
-                    travel_month=start_date.strftime("%B"),
-                    from_city=request.from_city,
-                    travelers=request.travelers
-                )
-                logger.info("GPT-OSS AI generation successful")
-            else:
-                raise Exception("NVIDIA API key not configured")
-        except Exception as ai_error:
-            logger.warning(f"GPT-OSS AI failed, using high-quality standalone pipeline: {ai_error}")
-            # Use the high-quality standalone pipeline (works great!)
-            itinerary_data = generate_itinerary_pipeline(
-                destination=request.destination,
-                days=days,
-                from_city=request.from_city,
-                budget=request.budget,
-                interests=request.interests
-            )
-            logger.info("Standalone pipeline successful")
+        # Generate dynamic AI itinerary
+        logger.info(f"Generating dynamic AI itinerary for {request.destination} ({days} days)")
         
-        # Pipeline data successfully generated
+        itinerary_data = await generate_dynamic_itinerary(
+            destination=request.destination,
+            days=days,
+            from_city=request.from_city,
+            budget=request.budget,
+            interests=request.interests,
+            travelers=request.travelers,
+            departure_date=request.departure_date,
+            return_date=request.return_date
+        )
         
-        # Extract the structured data from the pipeline response
-        try:
-            if isinstance(itinerary_data, dict) and "itinerary" in itinerary_data:
-                # Pipeline response is properly structured with new schema
-                summary = itinerary_data.get("summary", f"Your {days}-day journey from {request.from_city} to {request.destination}")
-                raw_itinerary = itinerary_data.get("itinerary", [])
-                
-                # Transform pipeline structure to frontend-expected structure
-                itinerary = []
-                for day_data in raw_itinerary:
-                    transformed_day = {
-                        "day": day_data.get("day", 1),
-                        "title": day_data.get("theme", f"Day {day_data.get('day', 1)} in {request.destination}"),
-                        "activities": day_data.get("activities", [])
-                    }
-                    itinerary.append(transformed_day)
-                
-                # Extract highlights from the first day's highlights
-                highlights = []
-                if raw_itinerary and len(raw_itinerary) > 0:
-                    first_day = raw_itinerary[0]
-                    if "highlights" in first_day and isinstance(first_day["highlights"], list):
-                        highlights = first_day["highlights"]
-                
-                if not highlights:
-                    highlights = [f"Explore {request.destination}", f"Experience local culture", "Discover hidden gems"]
-                
-                # Extract cultural insights from the first day
-                cultural_insights = ""
-                if raw_itinerary and len(raw_itinerary) > 0:
-                    first_day = raw_itinerary[0]
-                    if "cultural_insight" in first_day:
-                        insight_data = first_day["cultural_insight"]
-                        # Defensive programming: ensure it's a string
-                        if isinstance(insight_data, list):
-                            cultural_insights = insight_data[0] if insight_data else ""
-                        else:
-                            cultural_insights = str(insight_data) if insight_data else ""
-                
-                if not cultural_insights:
-                    cultural_insights = "Immerse yourself in local culture and traditions."
-                
-                # Extract local secrets from the first day
-                local_recommendations = ""
-                if raw_itinerary and len(raw_itinerary) > 0:
-                    first_day = raw_itinerary[0]
-                    if "local_secrets" in first_day:
-                        secrets_data = first_day["local_secrets"]
-                        # Defensive programming: ensure it's a string
-                        if isinstance(secrets_data, list):
-                            local_recommendations = secrets_data[0] if secrets_data else ""
-                        else:
-                            local_recommendations = str(secrets_data) if secrets_data else ""
-                
-                if not local_recommendations:
-                    local_recommendations = "Explore authentic local experiences beyond tourist spots."
-                
-                # Extract travel tips from the first day
-                travel_tips = ""
-                if raw_itinerary and len(raw_itinerary) > 0:
-                    first_day = raw_itinerary[0]
-                    if "travel_tips" in first_day:
-                        tips_data = first_day["travel_tips"]
-                        # Defensive programming: ensure it's a string
-                        if isinstance(tips_data, list):
-                            travel_tips = tips_data[0] if tips_data else ""
-                        else:
-                            travel_tips = str(tips_data) if tips_data else ""
-                
-                if not travel_tips:
-                    travel_tips = f"Plan your trip from {request.from_city} to {request.destination} with local insights."
-                
-                estimated_budget = itinerary_data.get("estimated_budget", request.budget)
-                ai_provider = itinerary_data.get("ai_provider", "Standalone Lightweight Pipeline")
-                
-                # Check if pipeline info is available
-                pipeline_info = itinerary_data.get("pipeline_info", {})
-                if pipeline_info:
-                    logger.info(f"Pipeline stages completed: {pipeline_info.get('stages_completed', [])}")
-            else:
-                # Fallback to basic structure - match the frontend interface with destination-specific activities
-                summary = f"Your {days}-day journey from {request.from_city} to {request.destination}"
-                
-                # Generate destination-specific activities based on common patterns
-                destination_activities = [
-                    f"09:00: Explore {request.destination} city center and main attractions",
-                    f"14:00: Visit local landmarks and cultural sites in {request.destination}",
-                    f"19:00: Experience {request.destination} nightlife and local cuisine"
-                ]
-                
-                itinerary = [{"day": i+1, "summary": f"Day {i+1} in {request.destination}", "activities": destination_activities} for i in range(days)]
-                highlights = [f"Explore {request.destination}", f"Experience local culture", f"Discover hidden gems"]
-                estimated_budget = request.budget
-                cultural_insights = "Immerse yourself in local culture and traditions."
-                local_recommendations = "Explore authentic local experiences beyond tourist spots."
-                travel_tips = f"Plan your trip from {request.from_city} to {request.destination} with local insights."
-                ai_provider = "Knowledge-based fallback"
-        except Exception as e:
-            logger.error(f"Error processing itinerary_data: {e}")
-            # Fallback to basic structure on any error - match the frontend interface with destination-specific activities
-            summary = f"Your {days}-day journey from {request.from_city} to {request.destination}"
-            
-            # Generate destination-specific activities based on common patterns
-            destination_activities = [
-                f"09:00: Explore {request.destination} city center and main attractions",
-                f"14:00: Visit local landmarks and cultural sites in {request.destination}",
-                f"19:00: Experience {request.destination} nightlife and local cuisine"
-            ]
-            
-            itinerary = [{"day": i+1, "summary": f"Day {i+1} in {request.destination}", "activities": destination_activities} for i in range(days)]
-            highlights = [f"Explore {request.destination}", f"Experience local culture", "Discover hidden gems"]
-            estimated_budget = request.budget
-            cultural_insights = "Immerse yourself in local culture and traditions."
-            local_recommendations = "Explore authentic local experiences beyond tourist spots."
-            travel_tips = f"Plan your trip from {request.from_city} to {request.destination} with local insights."
-            ai_provider = "Knowledge-based fallback"
+        logger.info("Dynamic AI itinerary generated successfully")
+        
+        # Transform the AI response to match frontend expectations
+        summary = itinerary_data.get("summary", f"Your {days}-day journey from {request.from_city} to {request.destination}")
+        raw_itinerary = itinerary_data.get("itinerary", [])
+        
+        # Transform itinerary structure for frontend compatibility
+        itinerary = []
+        for day_data in raw_itinerary:
+            transformed_day = {
+                "day": day_data.get("day", 1),
+                "title": day_data.get("theme", f"Day {day_data.get('day', 1)} in {request.destination}"),
+                "activities": day_data.get("activities", [])
+            }
+            itinerary.append(transformed_day)
+        
+        # Extract highlights from the first day or use defaults
+        highlights = []
+        if raw_itinerary and len(raw_itinerary) > 0:
+            first_day = raw_itinerary[0]
+            if "highlights" in first_day and isinstance(first_day["highlights"], list):
+                highlights = first_day["highlights"]
+        
+        if not highlights:
+            highlights = [f"Explore {request.destination}", "Experience local culture", "Discover hidden gems"]
+        
+        # Extract other fields with proper string conversion
+        cultural_insights = str(itinerary_data.get("cultural_insights", f"Immerse yourself in the rich culture of {request.destination}"))
+        local_recommendations = str(itinerary_data.get("local_recommendations", f"Discover authentic local experiences in {request.destination}"))
+        travel_tips = str(itinerary_data.get("travel_tips", f"Essential travel tips for visiting {request.destination}"))
+        estimated_budget = itinerary_data.get("estimated_budget", request.budget)
+        ai_provider = itinerary_data.get("ai_provider", "Dynamic AI Generation")
         
         return TravelPlanResponse(
             summary=summary,
@@ -203,6 +102,7 @@ async def plan_travel(request: TravelPlanRequest):
         )
         
     except Exception as e:
+        logger.error(f"Failed to generate travel plan: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate travel plan: {str(e)}")
 
 @router.get("/health")
@@ -211,5 +111,6 @@ async def health_check():
     return {
         "status": "healthy",
         "ai_configured": is_configured(),
+        "ai_providers": get_ai_provider_info(),
         "service": "travel-planning"
     }

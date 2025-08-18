@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 
 from .routers import itineraries, signals, memory, digest, chat, plan
-from .services.llm_client import get_ai_provider_info
+from .services.llm_provider import get_ai_provider_info
 from .startup import initialize_pipeline
 
 
@@ -50,13 +50,13 @@ def create_app() -> FastAPI:
 			"status": "active",
 			"ai_providers": get_ai_provider_info(),
 			"platform": "NomadAI",
-			"version": "2.0",
+			"version": "2.2.0",
 			"features": [
-				"GPT-OSS-120B Integration",
-				"Two-Stage Pipeline",
-				"Advanced Travel Planning",
-				"Cultural Intelligence",
-				"Real-time AI Responses"
+				"Together.ai Integration (Default)",
+				"NVIDIA NIM Fallback",
+				"Dynamic AI Generation",
+				"No Pre-fed Data",
+				"Real-time Itinerary Creation"
 			]
 		}
 
