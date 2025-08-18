@@ -3,10 +3,14 @@ LLM Provider Service for NomadAI
 Supports Together.ai as default and NVIDIA NIM as fallback.
 """
 
-import httpx
 import os
 from typing import List, Dict, Optional, Any
 import logging
+
+try:
+    import httpx
+except ImportError:
+    httpx = None
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +81,9 @@ class LLMProvider:
     
     async def _call_together(self, messages: List[Dict[str, str]], **kwargs) -> str:
         """Call Together.ai API"""
+        if httpx is None:
+            raise Exception("httpx not available")
+            
         headers = {
             "Authorization": f"Bearer {self.together_api_key}",
             "Content-Type": "application/json"
@@ -98,6 +105,9 @@ class LLMProvider:
     
     async def _call_nvidia(self, messages: List[Dict[str, str]], **kwargs) -> str:
         """Call NVIDIA NIM API"""
+        if httpx is None:
+            raise Exception("httpx not available")
+            
         headers = {
             "Authorization": f"Bearer {self.nvidia_api_key}",
             "Content-Type": "application/json",
