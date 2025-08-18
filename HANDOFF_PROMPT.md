@@ -4,14 +4,20 @@
 
 ## 📋 Project Overview
 
-**NomadsAI** is an AI-powered travel intelligence platform that combines cutting-edge AI technology with enterprise-grade architecture. The platform provides personalized travel planning experiences powered by NVIDIA's GPT-OSS-120B model.
+**NomadsAI** is an AI-powered travel intelligence platform that combines cutting-edge AI technology with enterprise-grade architecture. The platform provides personalized travel planning experiences powered by Together.ai (default) and NVIDIA NIM (fallback) with dynamic AI generation for any destination worldwide.
 
 ### 🎯 Current Status
-- **Version**: 2.0.0 (Latest stable release)
-- **Frontend**: Complete redesign with modern SaaS interface
-- **Backend**: FastAPI with comprehensive AI integration
-- **AI Engine**: NVIDIA GPT-OSS-120B fully integrated
-- **Deployment**: Vercel (Frontend) + Render (Backend)
+- **Version**: 2.2.0 (Latest stable release) ✅ **FULLY OPERATIONAL**
+- **Frontend**: Complete redesign with modern SaaS interface ✅ **DEPLOYED**
+- **Backend**: FastAPI with Together.ai + NVIDIA NIM integration ✅ **DEPLOYED**
+- **AI Engine**: Together.ai (default) + NVIDIA NIM (fallback) ✅ **ACTIVE**
+- **Deployment**: Vercel (Frontend) + Render (Backend) ✅ **LIVE**
+
+### 🚀 **MAJOR UPDATE - v2.2.0 COMPLETED**
+- ✅ **Together.ai Integration**: Now default provider with free API keys
+- ✅ **Dynamic AI Generation**: Removed all pre-fed data, works globally
+- ✅ **NVIDIA NIM Fallback**: Optional fallback provider
+- ✅ **Real-time Planning**: Generates itineraries from user input only
 
 ## 🏗️ Architecture Summary
 
