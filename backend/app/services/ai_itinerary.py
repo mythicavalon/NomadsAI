@@ -53,47 +53,31 @@ async def generate_dynamic_itinerary(
     """
     interests = interests or ["culture", "food", "sightseeing"]
     
-    # Create the user prompt
-    user_prompt = f"""Plan a {days}-day trip to {destination} for {travelers} traveler(s) with a {budget} budget.
+    # Create optimized prompt for faster response
+    user_prompt = f"""Create a {days}-day {destination} itinerary for {travelers} travelers ({budget} budget, interests: {', '.join(interests)}).
 
-Traveler details:
-- Departing from: {from_city}
-- Travel dates: {departure_date} to {return_date}
-- Interests: {', '.join(interests)}
-- Budget level: {budget}
-
-Please create a detailed itinerary with the following JSON structure:
+Return JSON format:
 {{
-    "summary": "Brief description of the trip",
+    "summary": "Trip description",
     "itinerary": [
         {{
             "day": 1,
-            "theme": "Day theme/title",
-            "activities": [
-                "Morning activity with specific location and time",
-                "Afternoon activity with specific location and time",
-                "Evening activity with specific location and time"
-            ],
-            "highlights": ["Key highlight 1", "Key highlight 2"],
-            "cultural_insight": "Cultural insight about the destination",
-            "local_secrets": "Local hidden gems and secrets",
-            "travel_tips": "Practical travel tips for this day"
+            "theme": "Day title",
+            "activities": ["Morning: Activity", "Afternoon: Activity", "Evening: Activity"],
+            "highlights": ["Highlight 1", "Highlight 2"],
+            "cultural_insight": "Cultural insight",
+            "local_secrets": "Hidden gems",
+            "travel_tips": "Travel tips"
         }}
     ],
     "estimated_budget": "{budget}",
-    "cultural_insights": "Overall cultural insights about {destination}",
-    "local_recommendations": "Hidden gems and local recommendations",
-    "travel_tips": "General travel tips for {destination}",
+    "cultural_insights": "Overall insights",
+    "local_recommendations": "Local recommendations", 
+    "travel_tips": "General tips",
     "ai_provider": "Dynamic AI Generation"
 }}
 
-Make sure to include:
-- Specific attraction names, restaurants, and locations
-- Realistic timing and logistics
-- Cultural context and local insights
-- Hidden gems and authentic experiences
-- Practical travel advice
-- Budget-appropriate suggestions"""
+Include specific venues, realistic timing, and {budget}-level suggestions."""
 
     try:
         messages = [
@@ -101,8 +85,8 @@ Make sure to include:
             {"role": "user", "content": user_prompt}
         ]
         
-        # Generate the itinerary using AI
-        response = await generate_completion(messages, temperature=0.8, max_tokens=3000)
+        # Generate the itinerary using AI (optimized for speed)
+        response = await generate_completion(messages, temperature=0.7, max_tokens=1500)
         
         # Try to parse the JSON response
         try:
