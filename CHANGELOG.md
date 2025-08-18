@@ -7,6 +7,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2024-12-19
+
+### 🚀 **MAJOR REFACTOR - DYNAMIC AI TRAVEL PLANNER**
+
+#### ✅ **IMPLEMENTED - Together.ai as Default Provider**
+- **Change**: Migrated from NVIDIA GPT-OSS-120B lock-in to Together.ai as default provider
+- **Benefits**: Free API keys available, OpenAI-compatible API, excellent Mixtral-8x7B-Instruct model
+- **Configuration**: Environment-based provider switching with automatic fallbacks
+- **Impact**: Democratized access to AI travel planning with free tier availability
+- **Status**: ✅ **PRODUCTION READY**
+
+#### ✅ **REMOVED - All Pre-fed Location/Itinerary Logic**
+- **Previous**: System relied on hardcoded JSON files for Tokyo, Barcelona, New Orleans
+- **Current**: 100% dynamic AI generation from user input only
+- **Deleted Files**: `backend/app/knowledge/*.json` files completely removed
+- **Architecture**: Pure AI-driven content generation without static dependencies
+- **Impact**: True real-time travel planning that adapts to any destination globally
+- **Status**: ✅ **FULLY DYNAMIC**
+
+#### ✅ **IMPLEMENTED - Clean System Instruction**
+- **Instruction**: "You are NomadAI, a helpful travel planner that creates personalized, dynamic itineraries."
+- **Approach**: Simple, focused prompt without pre-loaded knowledge constraints
+- **Result**: AI responds purely to user requests without bias toward specific destinations
+- **Status**: ✅ **OPTIMIZED**
+
+#### ✅ **CREATED - Universal LLM Provider System**
+- **File**: `backend/app/services/llm_provider.py` - Universal provider abstraction
+- **Providers**: Together.ai (primary) → NVIDIA NIM (fallback) → Basic responses
+- **Features**: Automatic failover, environment-based configuration, provider health monitoring
+- **Compatibility**: OpenAI-compatible API structure for easy integration
+- **Status**: ✅ **ROBUST**
+
+#### ✅ **IMPLEMENTED - Dynamic Itinerary Generation**
+- **File**: `backend/app/services/ai_itinerary.py` - Pure AI-powered generation
+- **Capabilities**: JSON-structured responses, cultural insights, local recommendations
+- **Validation**: Comprehensive response validation and fallback handling
+- **Output**: Rich, destination-specific content generated in real-time
+- **Status**: ✅ **INTELLIGENT**
+
+### Added
+- **Together.ai Integration**: Free API keys, Mixtral-8x7B-Instruct model, OpenAI compatibility
+- **Dynamic AI Generation**: Real-time itinerary creation without pre-fed data
+- **Universal Provider System**: Automatic failover between multiple AI providers
+- **Environment Configuration**: `.env.example` with setup instructions
+- **Response Validation**: Robust JSON parsing and fallback mechanisms
+- **Cultural Intelligence**: AI-generated cultural insights and local recommendations
+
+### Changed
+- **Provider Priority**: Together.ai (default) → NVIDIA NIM (fallback) → Basic responses
+- **Content Generation**: From static JSON files to 100% dynamic AI generation
+- **System Architecture**: Removed all dependencies on pre-loaded destination knowledge
+- **API Behavior**: Now responds to any destination globally, not just pre-configured cities
+- **Setup Process**: Simplified to just requiring Together.ai API key (free)
+
+### Removed
+- **Pre-fed Data**: Deleted all `backend/app/knowledge/*.json` files
+- **Static Dependencies**: Removed hardcoded city knowledge and attraction lists
+- **NVIDIA Lock-in**: No longer locked to NVIDIA GPT-OSS-120B as only option
+- **Geographic Limitations**: Removed restrictions to specific pre-configured destinations
+
+### Fixed
+- **Global Coverage**: System now works for any destination worldwide
+- **Real-time Generation**: True dynamic content creation from user prompts
+- **Provider Flexibility**: No longer dependent on single AI provider
+- **Setup Simplicity**: Reduced configuration complexity with free API options
+
 ### ✅ **CRITICAL ISSUES RESOLVED - December 2024**
 
 #### ✅ **FIXED - Pipeline Priority and Data Structure Issues**

@@ -13,14 +13,14 @@ NomadsAI is a modern travel planning platform that combines intelligent AI-power
 
 ### ✨ Key Features
 
-- **🤖 Intelligent Planning**: Standalone lightweight pipeline with real destination knowledge
+- **🤖 Dynamic AI Planning**: Real-time itinerary generation using Together.ai and NVIDIA NIM
 - **⚡ Fast Deployment**: Seconds deployment time with no heavy dependencies
-- **🏛️ Rich Content**: Pre-loaded knowledge for major destinations (London, Paris, Tokyo, NYC)
-- **🎯 Real Attractions**: Actual landmarks like British Museum, Eiffel Tower, Senso-ji Temple
-- **💎 Hidden Gems**: Local secrets and authentic experiences
-- **🛡️ Robust Fallbacks**: Graceful handling of unknown destinations
+- **🌍 Global Coverage**: Works for any destination worldwide, not limited to pre-configured cities
+- **🎯 Real-time Generation**: AI creates specific attractions, restaurants, and activities on demand
+- **💎 Cultural Intelligence**: AI-generated local insights and hidden gems for every destination
+- **🛡️ Robust Fallbacks**: Multiple AI provider failover with graceful degradation
 - **📱 Modern UI**: Responsive SaaS interface with shadcn/ui components
-- **🔌 API-First**: RESTful API architecture for easy integration
+- **🔌 API-First**: RESTful API architecture with OpenAI-compatible endpoints
 
 ## 🏗️ Architecture
 
@@ -77,21 +77,32 @@ cd backend
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
+
+# Configure environment variables
+cp .env.example .env
+# Edit .env and add your Together.ai API key (free at https://api.together.xyz/settings/api-keys)
+
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Backend API will be available at: `http://localhost:8000`
 
+#### 🔑 API Key Setup
+
+1. **Get Free Together.ai API Key**: Visit https://api.together.xyz/settings/api-keys
+2. **Set Environment Variable**: Add `TOGETHER_API_KEY=your_key_here` to `.env`
+3. **Optional NVIDIA Fallback**: Add `NVIDIA_API_KEY=your_key_here` for fallback provider
+
 ## 🎯 Current System Status
 
 ### ✅ **Fully Operational Features**
 
-#### **Standalone Lightweight Pipeline**
+#### **Dynamic AI Travel Planning**
 - ⚡ **Zero Heavy Dependencies**: No ML libraries, immediate deployment
-- 🏛️ **Real Knowledge**: British Museum, Tower of London, Eiffel Tower, Senso-ji Temple
-- 🌍 **Destination Coverage**: London, Paris, Tokyo, New York with rich content
-- 💎 **Hidden Gems**: Leadenhall Market, Neal's Yard, Yanaka Ginza, High Line
-- 🚗 **Practical Tips**: Transport, payment, local advice for each city
+- 🌍 **Global Coverage**: Works for any destination worldwide via AI generation
+- 🤖 **Together.ai Integration**: Free API keys with Mixtral-8x7B-Instruct model
+- 💎 **Real-time Content**: AI generates specific attractions, restaurants, and cultural insights
+- 🚗 **Practical Intelligence**: AI provides transport, payment, and local advice for any destination
 - 🛡️ **Type Safety**: All fields properly typed for Pydantic validation
 
 #### **API Endpoints**
@@ -106,26 +117,26 @@ Backend API will be available at: `http://localhost:8000`
 - ✅ **Rich Content**: Real attraction names and cultural insights
 - ✅ **Defensive Programming**: Robust error handling for edge cases
 
-### 🔧 Recent Critical Fixes (December 2024)
+### 🚀 Recent Major Updates (December 2024)
 
-#### ✅ **Content Quality Restoration - RESOLVED (v2.1.1)**
-- **Issue**: API returning generic content instead of rich destination-specific attractions
-- **Root Cause**: Pipeline priority and data structure mapping issues
-- **Solution**: Fixed pipeline priority and data transformation between backend and frontend
-- **Result**: ⚡ **Rich content restored** - British Museum, Eiffel Tower, Senso-ji Temple
+#### ✅ **Dynamic AI Travel Planner - IMPLEMENTED (v2.2.0)**
+- **Change**: Migrated from pre-fed data to 100% dynamic AI generation
+- **Providers**: Together.ai (default) with NVIDIA NIM fallback
+- **Coverage**: Now works for any destination globally, not limited to pre-configured cities
+- **Result**: ⚡ **True real-time travel planning** - AI generates specific content on demand
 - **Status**: ✅ **PRODUCTION READY**
 
-#### ✅ **Security Vulnerability - FIXED (v2.1.1)**
-- **Issue**: NVIDIA API key hardcoded in source code
-- **Risk**: API credentials exposed in repository
-- **Solution**: Migrated to environment variable (NVIDIA_API_KEY)
-- **Status**: ✅ **SECURITY RESOLVED**
+#### ✅ **Together.ai Integration - ACTIVE (v2.2.0)**
+- **Provider**: Free API keys available at https://api.together.xyz/settings/api-keys
+- **Model**: Mixtral-8x7B-Instruct-v0.1 for excellent travel planning
+- **Benefits**: No vendor lock-in, OpenAI-compatible API, cost-effective
+- **Status**: ✅ **DEFAULT PROVIDER**
 
-#### ✅ **Server Startup - OPTIMIZED (v2.1.1)**
-- **Issue**: FastAPI server startup timeouts due to pipeline testing
-- **Solution**: Removed blocking startup tests, pipeline initializes on-demand
-- **Result**: ⚡ **Fast, reliable server startup**
-- **Status**: ✅ **DEPLOYMENT READY**
+#### ✅ **Pre-fed Data Removal - COMPLETED (v2.2.0)**
+- **Previous**: System limited to Tokyo, Barcelona, New Orleans with static JSON files
+- **Current**: AI generates content for any destination worldwide
+- **Impact**: ⚡ **Unlimited global coverage** - works for any city, country, or region
+- **Status**: ✅ **FULLY DYNAMIC**
 
 ## 📚 API Documentation
 
@@ -307,4 +318,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 *Fast, intelligent, reliable travel planning*
 
-**Current Status: 🟢 PRODUCTION READY - v2.1.1 (December 2024)**
+**Current Status: 🟢 PRODUCTION READY - v2.2.0 (December 2024)**
+
+**🚀 NEW: Dynamic AI Travel Planner with Together.ai Integration**
