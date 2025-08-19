@@ -49,7 +49,6 @@ NomadsAI/
 | **Backend** | FastAPI + Python | 3.11+ | ✅ Active |
 | **Pipeline** | Standalone Lightweight | Custom | ✅ Active |
 | **Database** | SQLite (auto-generated) | Latest | ✅ Active |
-| **Knowledge** | Pre-loaded destinations | Curated | ✅ Active |
 | **Deployment** | Vercel + Render | Latest | ✅ Ready |
 
 ## 🚀 Quick Start
