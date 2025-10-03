@@ -103,7 +103,7 @@ INSTEAD USE:
 ✓ "L'As du Fallafel (34 Rue des Rosiers, Marais) - Legendary falafel spot, €8-12, cash only, expect 20min queue at lunch. Try the special with eggplant."
 ✓ "Canal Saint-Martin neighborhood - locals' favorite for apéro. Walk along the locks, browse vintage shops on Rue de Marseille, sunset drinks at Chez Prune."
 
-Return ONLY valid JSON in this EXACT format:
+CRITICAL: Return ONLY raw JSON. No markdown, no code blocks, no explanation. Just pure JSON starting with { and ending with }.
 {{
     "summary": "Compelling 2-3 sentence trip overview highlighting unique aspects",
     "itinerary": [
@@ -142,7 +142,27 @@ Generate a DETAILED, SPECIFIC itinerary that reads like a professional concierge
         
         # Try to parse the JSON response
         try:
-            itinerary_data = json.loads(response)
+            # Try to extract JSON from markdown code blocks if present
+            json_text = response.strip()
+            
+            # Remove markdown code blocks if present
+            if json_text.startswith("```json"):
+                json_text = json_text[7:]  # Remove ```json
+            elif json_text.startswith("```"):
+                json_text = json_text[3:]  # Remove ```
+            
+            if json_text.endswith("```"):
+                json_text = json_text[:-3]  # Remove trailing ```
+            
+            json_text = json_text.strip()
+            
+            # Try to find JSON object in the text
+            if "{" in json_text and "}" in json_text:
+                start = json_text.index("{")
+                end = json_text.rindex("}") + 1
+                json_text = json_text[start:end]
+            
+            itinerary_data = json.loads(json_text)
             
             # Ensure all required fields are present
             if not isinstance(itinerary_data, dict):
@@ -158,6 +178,7 @@ Generate a DETAILED, SPECIFIC itinerary that reads like a professional concierge
             
         except (json.JSONDecodeError, ValueError) as e:
             logger.warning(f"Failed to parse AI response as JSON: {e}")
+            logger.debug(f"Raw response (first 500 chars): {response[:500]}")
             # Extract itinerary data from text response
             return _extract_itinerary_from_text(response, destination, days, from_city, budget)
     
