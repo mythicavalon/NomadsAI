@@ -59,31 +59,77 @@ async def generate_dynamic_itinerary(
     """
     interests = interests or ["culture", "food", "sightseeing"]
     
-    # Create optimized prompt for faster response
-    user_prompt = f"""Create a {days}-day {destination} itinerary for {travelers} travelers ({budget} budget, interests: {', '.join(interests)}).
+    # Budget-specific guidance
+    budget_guidance = {
+        "budget": "hostels, street food, free attractions, public transport, local eateries under $15/meal",
+        "essential": "3-star hotels, casual dining $15-30/meal, mix of paid/free attractions, metro/bus",
+        "medium": "4-star hotels, mid-range restaurants $30-60/meal, popular attractions, occasional taxi",
+        "premium": "4-5 star hotels, fine dining $60-150/meal, skip-the-line tickets, private transfers when needed",
+        "luxury": "5-star hotels/suites, Michelin-starred dining $150+/meal, VIP experiences, private car service, exclusive access"
+    }
+    
+    budget_details = budget_guidance.get(budget, budget_guidance["medium"])
+    
+    # Create DETAILED, SPECIFIC prompt
+    user_prompt = f"""You are a luxury travel concierge planning a {days}-day trip to {destination} for {travelers} traveler(s).
 
-Return JSON format:
+CLIENT PROFILE:
+- Budget Level: {budget.upper()} ({budget_details})
+- Interests: {', '.join(interests)}
+- Travel Dates: {departure_date} to {return_date}
+- Origin: {from_city}
+
+YOUR TASK - Create an EXCEPTIONAL itinerary with:
+
+✓ SPECIFIC VENUES: Real names, addresses, signature items/exhibits
+✓ RESTAURANTS: Actual establishments with cuisine type, price range, must-try dishes, reservation needs
+✓ TIMING: Exact times (e.g., "9:30 AM"), duration estimates, queue times
+✓ TRANSPORT: How to get between venues (walk 10min, taxi €15, metro line 4)
+✓ INSIDER TIPS: Booking advice, best times to visit, dress codes, local etiquette
+✓ HIDDEN GEMS: Lesser-known spots locals love, not just TripAdvisor top 10
+✓ CULTURAL CONTEXT: Historical significance, local customs, interesting facts
+✓ PRACTICAL DETAILS: Ticket prices, opening hours, what to bring
+
+BUDGET REQUIREMENTS for {budget}:
+{budget_details}
+
+DO NOT USE:
+❌ Generic phrases like "explore the city" or "visit main attractions"
+❌ Vague descriptions like "a famous museum" or "local restaurant"
+❌ Placeholder content like "experience local culture"
+
+INSTEAD USE:
+✓ "Musée d'Orsay (1 Rue de la Légion d'Honneur) - Impressionist masterpieces in a former railway station. €16, opens 9:30 AM, skip-the-line tickets available online. Allow 2-3 hours."
+✓ "L'As du Fallafel (34 Rue des Rosiers, Marais) - Legendary falafel spot, €8-12, cash only, expect 20min queue at lunch. Try the special with eggplant."
+✓ "Canal Saint-Martin neighborhood - locals' favorite for apéro. Walk along the locks, browse vintage shops on Rue de Marseille, sunset drinks at Chez Prune."
+
+Return ONLY valid JSON in this EXACT format:
 {{
-    "summary": "Trip description",
+    "summary": "Compelling 2-3 sentence trip overview highlighting unique aspects",
     "itinerary": [
         {{
             "day": 1,
-            "theme": "Day title",
-            "activities": ["Morning: Activity", "Afternoon: Activity", "Evening: Activity"],
-            "highlights": ["Highlight 1", "Highlight 2"],
-            "cultural_insight": "Cultural insight",
-            "local_secrets": "Hidden gems",
-            "travel_tips": "Travel tips"
+            "theme": "Descriptive theme for the day (e.g., 'Historic Paris & Left Bank Charm')",
+            "activities": [
+                "9:00 AM - [SPECIFIC VENUE with address] - [What to see/do, duration, cost, insider tip]",
+                "1:00 PM - [SPECIFIC RESTAURANT with address] - [Cuisine, price, must-order dishes]",
+                "3:30 PM - [SPECIFIC ATTRACTION] - [Description, logistics, why it's special]",
+                "7:00 PM - [SPECIFIC DINNER/EXPERIENCE] - [Full details]"
+            ],
+            "highlights": ["Specific highlight 1", "Specific highlight 2", "Specific highlight 3"],
+            "cultural_insight": "Fascinating cultural/historical insight specific to {destination} (2-3 sentences with real facts)",
+            "local_secrets": "Insider tip locals know - specific street, cafe, viewpoint, or experience most tourists miss",
+            "travel_tips": "Practical advice: transport card to buy, neighborhoods to stay, scams to avoid, local customs, payment methods"
         }}
     ],
     "estimated_budget": "{budget}",
-    "cultural_insights": "Overall insights",
-    "local_recommendations": "Local recommendations", 
-    "travel_tips": "General tips",
+    "cultural_insights": "Rich cultural overview of {destination} - history, customs, unique characteristics (3-4 sentences)",
+    "local_recommendations": "Specific local favorites: best bakery, coffee spot, Sunday market, late-night eats, etc.",
+    "travel_tips": "Essential practical tips: airport transfer options, best transport pass, tipping culture, sim card, safety notes",
     "ai_provider": "Dynamic AI Generation"
 }}
 
-Include specific venues, realistic timing, and {budget}-level suggestions."""
+Generate a DETAILED, SPECIFIC itinerary that reads like a professional concierge service, not a generic travel blog."""
 
     try:
         messages = [
@@ -91,8 +137,8 @@ Include specific venues, realistic timing, and {budget}-level suggestions."""
             {"role": "user", "content": user_prompt}
         ]
         
-        # Generate the itinerary using AI (optimized for speed)
-        response = await generate_completion(messages, temperature=0.7, max_tokens=1500)
+        # Generate the itinerary using AI (detailed responses need more tokens)
+        response = await generate_completion(messages, temperature=0.8, max_tokens=3000)
         
         # Try to parse the JSON response
         try:
