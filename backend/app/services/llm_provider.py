@@ -121,6 +121,9 @@ class LLMProvider:
         
         async with httpx.AsyncClient(timeout=120) as client:
             response = await client.post(self.groq_base_url, headers=headers, json=payload)
+            if response.status_code != 200:
+                error_detail = response.text
+                logger.error(f"Groq API error {response.status_code}: {error_detail}")
             response.raise_for_status()
             data = response.json()
             return data["choices"][0]["message"]["content"].strip()

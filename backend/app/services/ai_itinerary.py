@@ -177,8 +177,27 @@ Generate a DETAILED, SPECIFIC itinerary that reads like a professional concierge
             return validated_itinerary
             
         except (json.JSONDecodeError, ValueError) as e:
-            logger.warning(f"Failed to parse AI response as JSON: {e}")
-            logger.debug(f"Raw response (first 500 chars): {response[:500]}")
+            logger.error(f"Failed to parse AI response as JSON: {e}")
+            logger.error(f"Raw response (first 1000 chars): {response[:1000]}")
+            logger.error(f"Raw response (last 200 chars): {response[-200:]}")
+            
+            # Try one more aggressive extraction
+            try:
+                # Look for JSON-like structure more aggressively
+                import re
+                json_match = re.search(r'\{[\s\S]*"itinerary"[\s\S]*\}', response)
+                if json_match:
+                    potential_json = json_match.group(0)
+                    logger.info(f"Found potential JSON via regex, trying to parse...")
+                    itinerary_data = json.loads(potential_json)
+                    validated_itinerary = _validate_itinerary_response(
+                        itinerary_data, destination, days, from_city, budget
+                    )
+                    logger.info(f"Successfully parsed via aggressive extraction!")
+                    return validated_itinerary
+            except Exception as extraction_error:
+                logger.error(f"Aggressive extraction also failed: {extraction_error}")
+            
             # Extract itinerary data from text response
             return _extract_itinerary_from_text(response, destination, days, from_city, budget)
     
