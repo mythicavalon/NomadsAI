@@ -50,13 +50,16 @@ def create_app() -> FastAPI:
 			"status": "active",
 			"ai_providers": get_ai_provider_info(),
 			"platform": "NomadAI",
-			"version": "2.2.0",
+			"version": "3.0.0",
 			"features": [
-				"Together.ai Integration (Default)",
-				"NVIDIA NIM Fallback",
-				"Dynamic AI Generation",
-				"No Pre-fed Data",
-				"Real-time Itinerary Creation"
+				"Groq Integration (Primary - Lightning Fast)",
+				"DeepSeek Integration (Fallback - Capable AI)",
+				"Together.ai Integration (Optional Fallback)",
+				"NVIDIA NIM (Optional Fallback)",
+				"100% AI Generation - Zero Pre-loaded Data",
+				"Unlimited Global Coverage",
+				"Real-time Itinerary Creation",
+				"Free Tier Available"
 			]
 		}
 
