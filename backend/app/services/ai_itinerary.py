@@ -103,7 +103,7 @@ INSTEAD USE:
 ✓ "L'As du Fallafel (34 Rue des Rosiers, Marais) - Legendary falafel spot, €8-12, cash only, expect 20min queue at lunch. Try the special with eggplant."
 ✓ "Canal Saint-Martin neighborhood - locals' favorite for apéro. Walk along the locks, browse vintage shops on Rue de Marseille, sunset drinks at Chez Prune."
 
-CRITICAL: Return ONLY raw JSON. No markdown, no code blocks, no explanation. Just pure JSON starting with {{ and ending with }}.
+CRITICAL: Your response must be ONLY valid JSON. Do not include markdown formatting or code blocks. Start your response with a curly brace and end with a curly brace.
 {{
     "summary": "Compelling 2-3 sentence trip overview highlighting unique aspects",
     "itinerary": [
