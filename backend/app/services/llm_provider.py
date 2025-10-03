@@ -21,7 +21,7 @@ class LLMProvider:
         # Groq Configuration (Primary - Fast & Free)
         self.groq_api_key = os.getenv("GROQ_API_KEY", "")
         self.groq_base_url = "https://api.groq.com/openai/v1/chat/completions"
-        self.groq_model = "mixtral-8x7b-32768"  # Fast and capable (also try: llama-3.1-70b-versatile)
+        self.groq_model = "llama-3.1-70b-versatile"  # Current recommended model (mixtral-8x7b deprecated)
         
         # DeepSeek Configuration (Fallback 1 - Capable & Free)
         self.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "")

@@ -98,10 +98,10 @@ DO NOT USE:
 ❌ Vague descriptions like "a famous museum" or "local restaurant"
 ❌ Placeholder content like "experience local culture"
 
-INSTEAD USE:
-✓ "Musée d'Orsay (1 Rue de la Légion d'Honneur) - Impressionist masterpieces in a former railway station. €16, opens 9:30 AM, skip-the-line tickets available online. Allow 2-3 hours."
-✓ "L'As du Fallafel (34 Rue des Rosiers, Marais) - Legendary falafel spot, €8-12, cash only, expect 20min queue at lunch. Try the special with eggplant."
-✓ "Canal Saint-Martin neighborhood - locals' favorite for apéro. Walk along the locks, browse vintage shops on Rue de Marseille, sunset drinks at Chez Prune."
+GOOD EXAMPLE FORMAT (adapt to your destination):
+✓ "10:00 AM - [Museum Name] ([Address]) - [What's special]. [Price], [timing], [insider tip]. Allow [duration]."
+✓ "1:00 PM - [Restaurant Name] ([Address]) - [Cuisine type], [price range], [must-order dish]. [Reservation info]."
+✓ "3:00 PM - [Neighborhood/Attraction] - [What makes it special]. [Practical details]."
 
 CRITICAL: Your response must be ONLY valid JSON. Do not include markdown formatting or code blocks. Start your response with a curly brace and end with a curly brace.
 {{
@@ -138,7 +138,9 @@ Generate a DETAILED, SPECIFIC itinerary that reads like a professional concierge
         ]
         
         # Generate the itinerary using AI (detailed responses need more tokens)
-        response = await generate_completion(messages, temperature=0.8, max_tokens=3000)
+        # For long trips (10+ days), we need higher token limit
+        tokens_needed = min(6000, 500 * days)  # ~500 tokens per day, max 6000
+        response = await generate_completion(messages, temperature=0.8, max_tokens=tokens_needed)
         
         # Try to parse the JSON response
         try:
