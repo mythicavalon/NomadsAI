@@ -1,6 +1,6 @@
 """
 LLM Provider Service for NomadAI
-Supports Together.ai as default and NVIDIA NIM as fallback.
+Supports Groq (primary), DeepSeek, Together.ai, and NVIDIA NIM with automatic fallback.
 """
 
 import os
@@ -15,25 +15,43 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 class LLMProvider:
-    """Universal LLM provider supporting Together.ai and NVIDIA NIM"""
+    """Universal LLM provider supporting multiple AI services with automatic fallback"""
     
     def __init__(self):
-        # Together.ai Configuration (Default)
+        # Groq Configuration (Primary - Fast & Free)
+        self.groq_api_key = os.getenv("GROQ_API_KEY", "")
+        self.groq_base_url = "https://api.groq.com/openai/v1/chat/completions"
+        self.groq_model = "mixtral-8x7b-32768"  # Fast and capable
+        
+        # DeepSeek Configuration (Fallback 1 - Capable & Free)
+        self.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "")
+        self.deepseek_base_url = "https://api.deepseek.com/v1/chat/completions"
+        self.deepseek_model = "deepseek-chat"
+        
+        # Together.ai Configuration (Fallback 2)
         self.together_api_key = os.getenv("TOGETHER_API_KEY", "")
         self.together_base_url = "https://api.together.xyz/v1/chat/completions"
         self.together_model = "mistralai/Mixtral-8x7B-Instruct-v0.1"
         
-        # NVIDIA NIM Configuration (Fallback)
+        # NVIDIA NIM Configuration (Fallback 3)
         self.nvidia_api_key = os.getenv("NVIDIA_API_KEY", "")
         self.nvidia_base_url = "https://api.nvcf.nvidia.com/v1/chat/completions"
         self.nvidia_model = "nvidia/gpt-oss-120b"
         
-        # Provider priority: Together.ai first, then NVIDIA NIM
+        # Provider priority: Groq > DeepSeek > Together.ai > NVIDIA NIM
         self.providers = self._get_available_providers()
         
     def _get_available_providers(self) -> List[str]:
         """Get list of available providers in priority order"""
         providers = []
+        
+        if self.groq_api_key:
+            providers.append("groq")
+            logger.info("Groq provider available (Primary)")
+        
+        if self.deepseek_api_key:
+            providers.append("deepseek")
+            logger.info("DeepSeek provider available")
         
         if self.together_api_key:
             providers.append("together")
@@ -51,7 +69,7 @@ class LLMProvider:
     
     def is_configured(self) -> bool:
         """Check if at least one provider is configured"""
-        return bool(self.together_api_key or self.nvidia_api_key)
+        return bool(self.groq_api_key or self.deepseek_api_key or self.together_api_key or self.nvidia_api_key)
     
     async def generate_completion(self, messages: List[Dict[str, str]], **kwargs) -> str:
         """
@@ -66,7 +84,11 @@ class LLMProvider:
         """
         for provider in self.providers:
             try:
-                if provider == "together":
+                if provider == "groq":
+                    return await self._call_groq(messages, **kwargs)
+                elif provider == "deepseek":
+                    return await self._call_deepseek(messages, **kwargs)
+                elif provider == "together":
                     return await self._call_together(messages, **kwargs)
                 elif provider == "nvidia":
                     return await self._call_nvidia(messages, **kwargs)
@@ -78,6 +100,54 @@ class LLMProvider:
         
         # If all providers fail, use fallback
         return self._fallback_response(messages)
+    
+    async def _call_groq(self, messages: List[Dict[str, str]], **kwargs) -> str:
+        """Call Groq API (Primary - Fast & Free)"""
+        if httpx is None:
+            raise Exception("httpx not available")
+            
+        headers = {
+            "Authorization": f"Bearer {self.groq_api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "model": self.groq_model,
+            "messages": messages,
+            "temperature": kwargs.get("temperature", 0.7),
+            "max_tokens": kwargs.get("max_tokens", 2048),
+            "stream": False
+        }
+        
+        async with httpx.AsyncClient(timeout=120) as client:
+            response = await client.post(self.groq_base_url, headers=headers, json=payload)
+            response.raise_for_status()
+            data = response.json()
+            return data["choices"][0]["message"]["content"].strip()
+    
+    async def _call_deepseek(self, messages: List[Dict[str, str]], **kwargs) -> str:
+        """Call DeepSeek API (Fallback 1)"""
+        if httpx is None:
+            raise Exception("httpx not available")
+            
+        headers = {
+            "Authorization": f"Bearer {self.deepseek_api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "model": self.deepseek_model,
+            "messages": messages,
+            "temperature": kwargs.get("temperature", 0.7),
+            "max_tokens": kwargs.get("max_tokens", 2048),
+            "stream": False
+        }
+        
+        async with httpx.AsyncClient(timeout=120) as client:
+            response = await client.post(self.deepseek_base_url, headers=headers, json=payload)
+            response.raise_for_status()
+            data = response.json()
+            return data["choices"][0]["message"]["content"].strip()
     
     async def _call_together(self, messages: List[Dict[str, str]], **kwargs) -> str:
         """Call Together.ai API"""
@@ -149,18 +219,36 @@ I'll create a detailed, day-by-day itinerary tailored specifically to your prefe
             "default_provider": self.providers[0] if self.providers else "none"
         }
         
+        if "groq" in self.providers:
+            info["groq"] = {
+                "name": "Groq",
+                "model": self.groq_model,
+                "status": "active",
+                "priority": "primary"
+            }
+        
+        if "deepseek" in self.providers:
+            info["deepseek"] = {
+                "name": "DeepSeek",
+                "model": self.deepseek_model,
+                "status": "active",
+                "priority": "fallback-1"
+            }
+        
         if "together" in self.providers:
             info["together"] = {
                 "name": "Together.ai",
                 "model": self.together_model,
-                "status": "active"
+                "status": "active",
+                "priority": "fallback-2"
             }
         
         if "nvidia" in self.providers:
             info["nvidia"] = {
                 "name": "NVIDIA NIM",
                 "model": self.nvidia_model,
-                "status": "active"
+                "status": "active",
+                "priority": "fallback-3"
             }
         
         return info

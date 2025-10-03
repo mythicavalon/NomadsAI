@@ -1,7 +1,7 @@
 [project]
 name = "nomad_ai_backend"
-version = "0.1.0"
-description = "Nomad AI FastAPI backend"
+version = "3.0.0"
+description = "Nomad AI FastAPI backend - 100% AI-Powered Travel Planning"
 requires-python = ">=3.11"
 
 [tool.pytest.ini_options]

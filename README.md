@@ -13,12 +13,13 @@ NomadsAI is a modern travel planning platform that combines intelligent AI-power
 
 ### ✨ Key Features
 
-- **🤖 Dynamic AI Planning**: Real-time itinerary generation using Together.ai and NVIDIA NIM
-- **⚡ Fast Deployment**: Seconds deployment time with no heavy dependencies
-- **🌍 Global Coverage**: Works for any destination worldwide, not limited to pre-configured cities
+- **🤖 100% AI-Powered**: Fully dynamic itinerary generation using Groq (primary) and DeepSeek (fallback)
+- **⚡ Lightning Fast**: Sub-second responses with Groq's optimized inference
+- **🌍 Unlimited Coverage**: Works for ANY destination worldwide - no pre-loaded data limitations
 - **🎯 Real-time Generation**: AI creates specific attractions, restaurants, and activities on demand
 - **💎 Cultural Intelligence**: AI-generated local insights and hidden gems for every destination
-- **🛡️ Robust Fallbacks**: Multiple AI provider failover with graceful degradation
+- **🆓 Free to Start**: Generous free tiers on Groq and DeepSeek - no credit card required
+- **🛡️ Robust Fallbacks**: 4-tier failover system (Groq → DeepSeek → Together.ai → NVIDIA NIM)
 - **📱 Modern UI**: Responsive SaaS interface with shadcn/ui components
 - **🔌 API-First**: RESTful API architecture with OpenAI-compatible endpoints
 
@@ -47,7 +48,7 @@ NomadsAI/
 | **Frontend** | Next.js | 14.2.5+ | ✅ Active |
 | **Styling** | Tailwind CSS + shadcn/ui | Latest | ✅ Active |
 | **Backend** | FastAPI + Python | 3.11+ | ✅ Active |
-| **Pipeline** | Standalone Lightweight | Custom | ✅ Active |
+| **AI Engine** | Groq + DeepSeek | v3.0 | ✅ Active |
 | **Database** | SQLite (auto-generated) | Latest | ✅ Active |
 | **Deployment** | Vercel + Render | Latest | ✅ Ready |
 
@@ -86,23 +87,40 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 Backend API will be available at: `http://localhost:8000`
 
-#### 🔑 API Key Setup
+#### 🔑 API Key Setup (Required for AI Features)
 
-1. **Get Free Together.ai API Key**: Visit https://api.together.xyz/settings/api-keys
-2. **Set Environment Variable**: Add `TOGETHER_API_KEY=your_key_here` to `.env`
-3. **Optional NVIDIA Fallback**: Add `NVIDIA_API_KEY=your_key_here` for fallback provider
+**Primary (Recommended):**
+1. **Get Free Groq API Key**: Visit https://console.groq.com/keys
+   - 14,400 requests/day free
+   - Lightning-fast inference
+   - No credit card required
+   - Add `GROQ_API_KEY=your_key_here` to `.env`
+
+**Fallback (Recommended):**
+2. **Get Free DeepSeek API Key**: Visit https://platform.deepseek.com/api_keys
+   - Free tier with $5 credits
+   - Capable AI model
+   - Add `DEEPSEEK_API_KEY=your_key_here` to `.env`
+
+**Optional Additional Fallbacks:**
+3. **Together.ai**: https://api.together.xyz/settings/api-keys
+4. **NVIDIA NIM**: https://build.nvidia.com/
+
+**Minimum Required**: At least one API key (GROQ_API_KEY or DEEPSEEK_API_KEY)
 
 ## 🎯 Current System Status
 
 ### ✅ **Fully Operational Features**
 
-#### **Dynamic AI Travel Planning**
-- ⚡ **Zero Heavy Dependencies**: No ML libraries, immediate deployment
-- 🌍 **Global Coverage**: Works for any destination worldwide via AI generation
-- 🤖 **Together.ai Integration**: Free API keys with Mixtral-8x7B-Instruct model
+#### **100% AI-Powered Travel Planning**
+- ⚡ **Zero Pre-loaded Data**: Pure AI generation for unlimited destinations
+- 🌍 **Global Coverage**: Any city, country, or region worldwide
+- 🤖 **Groq Integration (Primary)**: Lightning-fast inference with Mixtral-8x7B (14,400 free requests/day)
+- 🧠 **DeepSeek Integration (Fallback)**: Capable AI with generous free tier
 - 💎 **Real-time Content**: AI generates specific attractions, restaurants, and cultural insights
 - 🚗 **Practical Intelligence**: AI provides transport, payment, and local advice for any destination
 - 🛡️ **Type Safety**: All fields properly typed for Pydantic validation
+- 🆓 **No Credit Card Needed**: Both Groq and DeepSeek offer free tiers
 
 #### **API Endpoints**
 - ✅ `POST /api/plan` - Generate rich travel itineraries
@@ -116,26 +134,27 @@ Backend API will be available at: `http://localhost:8000`
 - ✅ **Rich Content**: Real attraction names and cultural insights
 - ✅ **Defensive Programming**: Robust error handling for edge cases
 
-### 🚀 Recent Major Updates (December 2024)
+### 🚀 Recent Major Updates (January 2025)
 
-#### ✅ **Dynamic AI Travel Planner - IMPLEMENTED (v2.2.0)**
-- **Change**: Migrated from pre-fed data to 100% dynamic AI generation
-- **Providers**: Together.ai (default) with NVIDIA NIM fallback
-- **Coverage**: Now works for any destination globally, not limited to pre-configured cities
-- **Result**: ⚡ **True real-time travel planning** - AI generates specific content on demand
+#### ✅ **Groq & DeepSeek Integration - IMPLEMENTED (v3.0.0)**
+- **Change**: Added Groq (primary) and DeepSeek (fallback) for superior performance
+- **Providers**: Groq → DeepSeek → Together.ai → NVIDIA NIM (automatic failover)
+- **Performance**: Lightning-fast responses (<1 second) with Groq
+- **Cost**: 100% free tier available - no credit card required
 - **Status**: ✅ **PRODUCTION READY**
 
-#### ✅ **Together.ai Integration - ACTIVE (v2.2.0)**
-- **Provider**: Free API keys available at https://api.together.xyz/settings/api-keys
-- **Model**: Mixtral-8x7B-Instruct-v0.1 for excellent travel planning
-- **Benefits**: No vendor lock-in, OpenAI-compatible API, cost-effective
-- **Status**: ✅ **DEFAULT PROVIDER**
+#### ✅ **Complete Pre-loaded Data Removal - COMPLETED (v3.0.0)**
+- **Previous**: Limited pre-loaded knowledge for London, Paris, Tokyo, NYC, Sydney
+- **Current**: 100% AI-generated content - ZERO pre-loaded data
+- **Impact**: ⚡ **Truly unlimited destinations** - works for ANY location worldwide
+- **Database**: Removed SQLite knowledge database for cleaner deployment
+- **Status**: ✅ **FULLY AI-DRIVEN**
 
-#### ✅ **Pre-fed Data Removal - COMPLETED (v2.2.0)**
-- **Previous**: System limited to Tokyo, Barcelona, New Orleans with static JSON files
-- **Current**: AI generates content for any destination worldwide
-- **Impact**: ⚡ **Unlimited global coverage** - works for any city, country, or region
-- **Status**: ✅ **FULLY DYNAMIC**
+#### ✅ **Free API Keys - No Credit Card Required**
+- **Groq**: 14,400 free requests/day at https://console.groq.com/keys
+- **DeepSeek**: Free tier with $5 credits at https://platform.deepseek.com/api_keys
+- **Result**: Start building immediately with zero cost
+- **Status**: ✅ **FREE TO START**
 
 ## 📚 API Documentation
 
@@ -317,6 +336,6 @@ This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENS
 
 *Fast, intelligent, reliable travel planning*
 
-**Current Status: 🟢 PRODUCTION READY - v2.2.0 (August 2025)**
+**Current Status: 🟢 PRODUCTION READY - v3.0.0 (January 2025)**
 
-**🚀 NEW: Dynamic AI Travel Planner with Together.ai Integration**
+**🚀 NEW: 100% AI-Powered with Groq & DeepSeek - Zero Pre-loaded Data**

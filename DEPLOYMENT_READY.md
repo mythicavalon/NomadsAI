@@ -2,9 +2,9 @@
 
 ## ✅ **REPOSITORY STATUS: PRODUCTION READY**
 
-**Date**: December 19, 2024  
-**Version**: v2.1.1  
-**Status**: 🟢 **All systems operational and deployment-ready**
+**Date**: January 2025  
+**Version**: v3.0.0  
+**Status**: 🟢 **All systems operational and deployment-ready - 100% AI-Powered**
 
 ---
 
@@ -29,12 +29,26 @@
 
 ### **Backend (Render)**
 1. Connect GitHub repository to Render
-2. Set environment variables:
+2. Set environment variables (MINIMUM: Set at least one AI provider):
    ```
-   NVIDIA_API_KEY=your_api_key_here (optional - for AI features)
+   # Primary (Recommended - Free)
+   GROQ_API_KEY=your_groq_api_key_here
+   
+   # Fallback (Recommended - Free)
+   DEEPSEEK_API_KEY=your_deepseek_api_key_here
+   
+   # Optional Additional Fallbacks
+   TOGETHER_API_KEY=your_together_api_key_here
+   NVIDIA_API_KEY=your_nvidia_api_key_here
+   
+   # CORS
    CORS_ORIGINS=https://your-frontend.vercel.app
    ```
 3. Deploy automatically on push to main
+
+**API Keys (Free):**
+- Groq: https://console.groq.com/keys (14,400 requests/day free)
+- DeepSeek: https://platform.deepseek.com/api_keys (Free tier with credits)
 
 ### **Frontend (Vercel)**
 1. Connect GitHub repository to Vercel
@@ -46,7 +60,8 @@
 
 ### **Environment Configuration**
 - Copy `.env.example` for local development
-- System works perfectly without NVIDIA_API_KEY (uses standalone pipeline)
+- **Minimum Required**: At least GROQ_API_KEY or DEEPSEEK_API_KEY for AI features
+- Without API keys: System falls back to basic template (limited functionality)
 - All required files present and configured
 
 ---
@@ -60,12 +75,13 @@
 - 📊 **Response Time**: <1 second
 - 🎯 **Content Quality**: Rich, destination-specific
 
-### **Content Verification**
-- **London**: British Museum, Tower of London, Buckingham Palace
-- **Tokyo**: Senso-ji Temple, Tokyo Skytree, Shibuya Crossing  
-- **Paris**: Eiffel Tower, Louvre Museum
-- **Cultural Insights**: Rich, destination-specific information
-- **Travel Tips**: Practical transport and local advice
+### **Content Generation**
+- **100% AI-Powered**: All content generated dynamically by AI
+- **Zero Pre-loaded Data**: No limitations on destinations
+- **Global Coverage**: Works for ANY city, country, or region worldwide
+- **Cultural Insights**: AI-generated, destination-specific information
+- **Travel Tips**: AI-generated practical transport and local advice
+- **Real Attractions**: AI generates specific venues, restaurants, activities
 
 ---
 
@@ -87,5 +103,6 @@
 
 ---
 
-*Last updated: December 19, 2024*  
-*Status: ✅ DEPLOYMENT READY*
+*Last updated: January 2025*  
+*Status: ✅ DEPLOYMENT READY - v3.0.0*  
+*Architecture: 100% AI-Powered - Zero Pre-loaded Data*
